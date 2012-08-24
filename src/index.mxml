@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
+			   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" pageTitle="LarvaMap"
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.events.StateChangeEvent;
+			import mx.events.ValidationResultEvent;
+			
+			private var configMain:XML = new XML;
+			
+			private function init():void
+			{
+				var configLoader:URLLoader=new URLLoader(new URLRequest("config/lmconfig.xml"));
+				configLoader.addEventListener(Event.COMPLETE, httpService_result);
+				configLoader.addEventListener(IOErrorEvent.IO_ERROR, httpService_fault);
+			}
+			
+			private function httpService_fault(evt:IOErrorEvent):void {
+			}
+			
+			private function httpService_result(evt:Event):void 
+			{
+				configMain = new XML(evt.currentTarget.data);
+				//the application is loading before it can get the Main Config URL 
+				//LoginWSURLString=configXML.LoginWSURL.toString();
+				//userManagementWSURString=configXML.UserManagementWSURL.toString();
+			}
+			
+			private function enterClick(event:MouseEvent):void
+			{
+				if(butLog.label == "Enter"){
+					emailValidator.validate(emailTExt.text);
+				}
+				else{
+					loginBox.visible = true;
+					butLog.label = "Enter";
+				}
+			}
+			
+			private function enterApp():void
+			{
+				toggleTools.visible = true;
+				myViewStack.selectedIndex = 2;
+				login.text = emailTExt.text;
+				loginPanel.visible = true;
+			}
+			private function checkEmail(event:Event):void
+			{
+				emailValidator.validate(emailTExt.text);
+			}
+			private function toggleChange(event:StateChangeEvent):void
+			{
+				myViewStack.selectedIndex = toggleTools.selectedIndex + 2;
+			}
+			private function emailValidator_invalid(evt:ValidationResultEvent):void {
+				Alert.show(evt.message);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<mx:EmailValidator id="emailValidator" valid="enterApp()" invalid="emailValidator_invalid(event);"/>
+		<fx:Array id="arr">
+			<fx:Object label="Behavior"/>
+			<fx:Object label="Model"/>
+		</fx:Array>
+		<s:Fade id="fade" duration="3000" />
+	</fx:Declarations>
+	<s:layout>
+		<s:VerticalLayout/>
+	</s:layout>
+	<mx:HBox width="100%" backgroundColor="#096BFF" verticalAlign="middle"
+			 height="52" fontSize="17">
+		<s:Label width="200" color="#FAF7F7" fontFamily="Verdana" fontSize="23" fontWeight="bold"
+				 paddingLeft="10" text="LarvaMap" />
+		<mx:HBox width="100%" verticalAlign="middle" horizontalAlign="center">
+			<mx:ToggleButtonBar currentStateChange="toggleChange(event)" id="toggleTools" visible="false" selectedButtonTextStyleName="mySelectedButtonTextStyleName" dataProvider="{arr}"/>
+		</mx:HBox>
+		<mx:HBox width="200" id="loginPanel" paddingRight="4" verticalAlign="middle"  visible="false">
+			<s:Label id="login" color="#FAF7F7" fontFamily="Verdana" fontSize="13" fontWeight="bold" />
+			<s:Label  color="#C9C9C9"  text="Exit" textDecoration="underline"  fontFamily="Verdana" fontSize="12" fontWeight="bold"/>
+		</mx:HBox>
+	</mx:HBox>
+	
+	<mx:ViewStack id="myViewStack" paddingTop="-10" width="100%" height="100%">
+		<s:NavigatorContent width="100%" height="100%">
+			<s:BorderContainer width="100%" height="100%" borderWeight="0" backgroundImage="@Embed('/assets/fish.jpg')">
+				<s:VGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"
+						  y="-9">
+					<mx:HBox id="loginBox" backgroundColor="0xCCCCCC" showEffect="fade" cornerRadius="8" alpha=".8" visible="false" width="370" height="70" verticalAlign="middle">
+						<s:Label paddingLeft="15" text="Enter Email:" fontWeight="bold" fontSize="15" width="125"/>
+						<s:TextInput enter="checkEmail(event)" id="emailTExt" width="210"/>
+					</mx:HBox>
+					<s:Button label="Login" id="butLog"
+							  width="120" height="45"
+							  click="enterClick(event)" color="#096BFF"
+							  fontFamily="Verdana" fontSize="23" fontWeight="bold"
+							  skinClass="spark.skins.spark.ButtonSkin"/>
+				</s:VGroup>
+			</s:BorderContainer>
+		</s:NavigatorContent>
+		<s:NavigatorContent>
+			
+		</s:NavigatorContent>
+		<s:NavigatorContent>
+			
+		</s:NavigatorContent>
+		<s:NavigatorContent>
+			
+		</s:NavigatorContent>
+	</mx:ViewStack>
+</s:Application>
