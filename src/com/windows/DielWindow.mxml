@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009"  height="100%" creationComplete="init()" horizontalScrollPolicy="off" cornerRadius="7"
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xA9ABAB" verticalScrollPolicy="off" creationPolicy="all"
+		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
+<fx:Script>
+	<![CDATA[
+		[Bindable]
+		public var selectedIndex:int = 0;
+		[Bindable]
+		public var selectedIndexPlus:int = 0;
+		[Bindable]
+		public var minD:String = "";
+		[Bindable]
+		public var maxD:String = "";
+		[Bindable]
+		public var selectedSun:int = 0;
+		[Bindable]
+		public var sunHour:int = 0;
+		[Bindable]
+		public var specificDate:Date = new Date;
+		
+				
+		private function init():void
+		{
+			
+		}
+	]]>
+</fx:Script>
+	<mx:VBox horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5">
+		<mx:Label text="{this.label}" fontSize="14" textDecoration="underline"/>
+		<mx:HBox verticalAlign="middle">
+			<s:Label text="Minimum: "/>
+			<cl:NumberInput fractionalDigits="5" text="{minD}" width="70" id="maxStep" paddingLeft="5"/>
+			<s:Label text="Maximum: " paddingLeft="5"/>
+			<cl:NumberInput fractionalDigits="5" text="{maxD}" width="70" id="minStep" paddingLeft="10"/>
+		</mx:HBox>
+		<mx:ViewStack id="myViewStack" selectedIndex="{selectedIndex}" width="100%" height="100%">
+			<s:NavigatorContent width="100%" height="100%">
+				<mx:HBox verticalAlign="middle">
+					<s:Label text="Plus or Minus: "/>
+					<mx:ComboBox selectionColor="#CAE8E8" selectedIndex="{selectedIndexPlus}" id="plusMin" dataProvider="['+','-']"/>
+					<s:Label text="Hours: "/>
+					<mx:NumericStepper id="hoursPick" value="{sunHour}" maximum="12" minimum="1"/>
+					<s:Label text="From: "/>
+					<mx:ComboBox selectionColor="#CAE8E8" selectedIndex="{selectedIndexPlus}" id="riseSet" dataProvider="['sunset','sunrise']"/>
+				</mx:HBox>
+			</s:NavigatorContent>
+			<s:NavigatorContent width="100%" height="100%">
+				<mx:HBox verticalAlign="middle">
+					<s:Label text="Date: " width="55"/>
+					<mx:DateField id="datePick" selectedDate="{specificDate}"/>
+					<s:Label text="Hours: " paddingLeft="10"/>
+					<mx:NumericStepper id="hoursPickspecific" value="{specificDate.hours+1}" maximum="24" minimum="1"/>
+				</mx:HBox>
+			</s:NavigatorContent>
+		</mx:ViewStack>
+	</mx:VBox>
+</mx:Canvas>

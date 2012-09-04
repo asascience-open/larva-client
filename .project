@@ -1,7 +1,7 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <projectDescription>
-	<name>LarvaMap</name>
-	<comment></comment>
+	<name>larva-client</name>
+	<comment/>
 	<projects>
 	</projects>
 	<buildSpec>
@@ -22,3 +22,4 @@
 		<nature>org.eclipse.mylyn.wikitext.ui.wikiTextNature</nature>
 	</natures>
 </projectDescription>
+

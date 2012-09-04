@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009"  height="100%" creationComplete="init()" horizontalScrollPolicy="off" cornerRadius="7"
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xA9ABAB" verticalScrollPolicy="off" creationPolicy="all"
+		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
+	<fx:Script>
+		<![CDATA[
+			[Bindable]
+			public var selectedIndexSeaW:int = 0;
+			[Bindable]
+			public var minT:String = "";
+			[Bindable]
+			public var maxT:String = "";
+			[Bindable]
+			public var gradientT:String = "";
+			
+			
+			private function init():void
+			{
+				
+			}
+		]]>
+	</fx:Script>
+	<mx:VBox horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5">
+		<mx:Label text="{this.label}" fontSize="14" textDecoration="underline"/>
+		<mx:HBox verticalAlign="middle">
+			<s:Label text="Minimum: "/>
+			<cl:NumberInput fractionalDigits="5" text="{minT}" width="50" id="maxStep" paddingLeft="5"/>
+			<s:Label text="Maximum: " paddingLeft="5"/>
+			<cl:NumberInput fractionalDigits="5" text="{maxT}" width="50" id="minStep" paddingLeft="10"/>
+			<s:Label text="Gradient: " paddingLeft="5"/>
+			<cl:NumberInput fractionalDigits="5" text="{gradientT}" width="50" id="grad" paddingLeft="10"/>
+		</mx:HBox>
+		<mx:HBox verticalAlign="middle">
+			<s:Label text="Variable: "/>
+			<mx:ComboBox selectionColor="#CAE8E8" selectedIndex="{selectedIndexSeaW}" id="riseSet">
+				<mx:dataProvider>
+					<mx:ArrayList>
+						<fx:Object label="Sea Water Salinity" value="sea_water_salinity" units="PSU"/>
+						<fx:Object label="Sea Water Temperature" value="sea_water_temperature" units="\u00b0C"/>
+					</mx:ArrayList>
+				</mx:dataProvider>
+			</mx:ComboBox>
+		</mx:HBox>
+	</mx:VBox>
+</mx:Canvas>

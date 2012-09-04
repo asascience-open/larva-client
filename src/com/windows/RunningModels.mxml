@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:esri="http://www.esri.com/2008/ags" >
+	<fx:Script>
+		<![CDATA[
+			import com.classes.*;
+			import com.classes.AppEvent;
+			import com.esri.ags.Graphic;
+			import com.esri.ags.SpatialReference;
+			import com.esri.ags.geometry.Extent;
+			import com.esri.ags.geometry.Polyline;
+			import com.esri.ags.geometry.WebMercatorMapPoint;
+			import com.esri.ags.layers.ArcGISTiledMapServiceLayer;
+			import com.esri.ags.layers.GraphicsLayer;
+			import com.esri.ags.utils.JSONUtil;
+			
+			import mx.controls.Alert;
+			import mx.events.StateChangeEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			
+			[Bindable]
+			private var modelList:Object = new Object;
+			[Bindable]
+			public var modelrunsURL:String = new String;
+			[Bindable]
+			public var backgroundMapU:String = "";
+			private var spatRefWM:SpatialReference = new SpatialReference(102100);
+			private var mapExtent:Extent = new Extent(-11294052,-4175045,5221238,6822104,spatRefWM);
+			
+			private function init():void
+			{
+				var backgroundMap:ArcGISTiledMapServiceLayer = new ArcGISTiledMapServiceLayer(backgroundMapU);
+				map.addLayer(backgroundMap);
+				AppEvent.addListener(AppEvent.EXIT_APP, exitApp);
+				map.extent = mapExtent;
+				refresh();
+				AppEvent.addListener(AppEvent.SET_APP_STATUS, enterAgain);
+			}
+			
+			private function enterAgain(event:AppEvent):void{
+				refresh();
+			}
+			
+			private function refresh():void
+			{
+				var modelList2:Object = new Object;	
+				modelList2 = {};
+				runs.dataProvider = null;
+				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+				var modelsservrequest:HTTPService = new HTTPService();
+				modelsservrequest.addEventListener(ResultEvent.RESULT, modelsservice);
+				modelsservrequest.url = modelrunsURL;
+				var uniqueObj:Object = new Object;
+				uniqueObj['x'] = new Date().time;
+				modelsservrequest.resultFormat = "object";
+				modelsservrequest.addEventListener(FaultEvent.FAULT, loadError);
+				modelsservrequest.send(uniqueObj);	
+				
+				function modelsservice(event:ResultEvent): void
+				{
+					var jsResult:Object = JSONUtil.decode(event.result.toString());
+					
+					modelList2 = behavior.convertTimeObject(jsResult.results);
+					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+					runs.dataProvider = modelList2;
+					runs.dataProvider.refresh();
+				}
+				function loadError(event:FaultEvent): void{
+					Alert.show("Service Error");
+					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+				}
+			}
+			
+			private function exitApp(event:AppEvent):void
+			{
+				runs.dataProvider = null;
+			}
+			public function downloadUrl(data:Object,url:String):void
+			{
+				for(var l:int=0; l <data.length; l++)
+				{
+					if(url == 'shp'&&data[l].Shapefile){
+						navigateToURL(new URLRequest(data[l].Shapefile),'_blank');
+					}
+					if(url == 'netcdf'&&data[l].NetCDF){
+						navigateToURL(new URLRequest(data[l].NetCDF),'_blank');
+					}
+				}				
+			}
+			
+			public function viewTrack(track:String):void
+			{
+				map.removeLayer(map.getLayer("bound"));
+				
+				if(track != null)
+				{
+					//Use for only one Line
+					var ra:Array = new Array();
+					var firstParse:Array = 	track.split("LINESTRING (");
+					var secParse:Array = String(firstParse[1]).split(")");
+					var thirdParse:Array = String(secParse[0]).split(",");
+					
+					for(var l:int=0; l <thirdParse.length; l++)
+					{
+						var fourthParse:Array = String(thirdParse[l]).split(" ");
+						//condition for a space " " in the array
+						if(l >0){
+							ra.push(new WebMercatorMapPoint(fourthParse[1],fourthParse[2]));
+						}
+						else{
+							ra.push(new WebMercatorMapPoint(fourthParse[0],fourthParse[1]));
+						}
+					} 
+					var geoLine:Polyline = new Polyline;
+					
+					geoLine.addPath(ra);
+					var graGraphic:Graphic = new Graphic(geoLine, lineSymbol);
+					var graphLayer:GraphicsLayer = new GraphicsLayer;
+					map.extent = geoLine.extent;
+					graphLayer.id = "bound";
+					graphLayer.add(graGraphic);
+					map.addLayer(graphLayer); 
+				}
+				else{
+				}
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<esri:SimpleLineSymbol id="lineSymbol"
+							   width="2"
+							   color="#666633" style="solid"/>
+	</fx:Declarations>
+	<mx:VBox width="100%" height="100%" paddingTop="10" horizontalAlign="center">
+		<s:Label text="Your Particle Models" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
+		<mx:HRule width="100%"/>
+			<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
+				<mx:Label fontWeight="bold" paddingLeft="0" text="Model List" fontSize="16" toolTip="Model Status" />
+			</mx:HBox>
+		<mx:HRule width="100%"/>
+		<mx:VDividedBox horizontalAlign="center" width="90%">
+			<mx:DataGrid dataProvider="{modelList}" id="runs" selectionColor="0xCCCCCC" width="100%" rowCount="6">
+				<mx:columns>
+					<mx:DataGridColumn dataField="_id" minWidth="130"/>
+					<!--<mx:DataGridColumn dataField="name" width="80"/>-->
+					<mx:DataGridColumn dataField="created" minWidth="130"/>
+					<mx:DataGridColumn dataField="status" textAlign="center" fontWeight="bold" itemRenderer="com.windows.statusRenderer" headerText="Progress"/>
+					<mx:DataGridColumn>
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:Button fontWeight="bold" enabled="{data.status =='SUCCESS'}" click="outerDocument.viewTrack(data.trackline)" label="View" />
+							</fx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn>
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:Button fontWeight="bold" click="outerDocument.downloadUrl(data.output,'netcdf')" enabled="{data.status =='SUCCESS'}" label="Download SHP" />
+							</fx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn>
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:Button fontWeight="bold" click="outerDocument.downloadUrl(data.output,'shp')" enabled="{data.status =='SUCCESS'}" label="Download NetCDF" />
+							</fx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+					<mx:DataGridColumn>
+						<mx:itemRenderer>
+							<fx:Component>
+								<mx:Button width="80" fontWeight="bold" label="Delete" enabled="false" />
+							</fx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+			<esri:Map visible="true" id="map" wrapAround180="true" width="100%" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" height="210" />
+		</mx:VDividedBox>
+		<s:Button fontWeight="bold" fontSize="14" label="Refresh List" id="goButt" toolTip="Refresh Status List" click="refresh()"/>
+	</mx:VBox>
+</mx:Canvas>

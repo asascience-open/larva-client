@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
+<fx:Script>
+	<![CDATA[
+		import com.classes.*;
+		import com.esri.ags.Graphic;
+		import com.esri.ags.SpatialReference;
+		import com.esri.ags.geometry.Extent;
+		import com.esri.ags.geometry.Polygon;
+		import com.esri.ags.geometry.WebMercatorExtent;
+		import com.esri.ags.geometry.WebMercatorMapPoint;
+		import com.esri.ags.layers.ArcGISTiledMapServiceLayer;
+		import com.esri.ags.layers.GraphicsLayer;
+		import com.esri.ags.utils.GeometryUtil;
+		import com.esri.ags.utils.JSONUtil;
+		
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.events.ItemClickEvent;
+		import mx.events.ListEvent;
+		import mx.events.StateChangeEvent;
+		import mx.events.ValidationResultEvent;
+		import mx.rpc.events.FaultEvent;
+		import mx.rpc.events.ResultEvent;
+		import mx.rpc.http.HTTPService;
+
+		[Bindable]
+		public var behaviorsList:Object = new Object;
+		
+		[Bindable]
+		public var emailStr:String = "";
+		[Bindable]
+		public var urlSearchStr:String = "";
+		[Bindable]
+		public var emailUrlStr:String = "";
+		[Bindable]
+		public var backgroundMapU:String = "";
+		[Bindable]
+		public var behSelectedID:String = "";
+		
+		private var spatRef:SpatialReference = new SpatialReference(4326);
+		private var spatRefWM:SpatialReference = new SpatialReference(102100);
+		private var loadedFileData:Object;		
+		private var mapExtent:Extent = new Extent(-11294052,-4175045,5221238,6822104,spatRefWM);
+		
+		private function init():void
+		{
+			var backgroundMap:ArcGISTiledMapServiceLayer = new ArcGISTiledMapServiceLayer(backgroundMapU);
+			map.addLayer(backgroundMap);
+			AppEvent.addListener(AppEvent.EXIT_APP, exitApp);
+			map.extent = mapExtent;
+		}
+		private function exitApp(event:AppEvent):void
+		{
+			behaviorsList = null;
+			listSearchText.text = "";
+			mapReset();
+			noLoc.visible = false;
+		}
+		private function refreshValues():void
+		{
+			AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+			mapReset();
+			noLoc.visible = false;
+			
+			var emailservrequest:HTTPService = new HTTPService();
+			emailservrequest.addEventListener(ResultEvent.RESULT, emailservice);
+			emailservrequest.url = emailUrlStr;
+			emailservrequest.resultFormat = "object";
+			emailservrequest.addEventListener(FaultEvent.FAULT, loadError);
+			emailservrequest.send();	
+			function emailservice(event:ResultEvent): void
+			{
+				var jsResult:Object = JSONUtil.decode(event.result.toString());
+				behaviorsList = behavior.convertTimeObject(jsResult.results);
+				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+			}
+		}
+		
+		private function search():void
+		{
+			AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+			mapReset();
+			var emailservrequest:HTTPService = new HTTPService();
+			emailservrequest.addEventListener(ResultEvent.RESULT, searchservice);
+			
+			var ownedText:String = "";
+			//check to see to return private or public
+			if(owned.selected == false){
+				ownedText = "&owned=true";
+			}
+			emailservrequest.url = urlSearchStr+"search.json?terms="+listSearchText.text+"&email="+emailStr+ownedText;
+			emailservrequest.resultFormat = "object";
+			emailservrequest.addEventListener(FaultEvent.FAULT, loadError);
+			emailservrequest.send();	
+			function searchservice(event:ResultEvent): void
+			{
+				var jsResult:Object = JSONUtil.decode(event.result.toString());
+				behaviorsList = behavior.convertTimeObject(jsResult.results);
+				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+			}
+		}
+		
+		private function loadError(event:FaultEvent): void
+		{
+			Alert.show("Service Error");
+			AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+		}
+		
+		//external call to main page to run model
+		private function nextTab():void{
+			if(bDG.selectedIndex >-1)
+			{
+				var object:Object = new Object();
+				if(editFirst.selected == true){
+					object["step"] = "edit";
+				}
+				else{
+					object["step"] = "currents";
+				}
+				object["id"] = bDG.selectedItem._id;
+				AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
+			}
+			else{
+				Alert.show("Please select a behavior","Alert");
+			}
+		}
+		
+		private function mapReset():void{
+			map.removeLayer(map.getLayer("bound"));
+			map.extent = mapExtent;
+			behSelectedID = "";
+			loadedFileName.text = "";
+		}
+			
+		//upload part
+		private function onUpload():void
+		{
+			mapReset();
+			var loadFile:FileReference= new FileReference();
+			loadFile.addEventListener(Event.SELECT,selectHandler)
+			loadFile.addEventListener(Event.COMPLETE,loadCompleteHandler);
+			loadFile.addEventListener(IOErrorEvent.IO_ERROR,loadIoErrorHandler);
+			loadFile.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA,postCompleteHandler);
+			var upload:Boolean = false;
+			
+			var fileFilterArray:Array=new Array();
+			//JSON documents
+			var fileFilter:FileFilter= new FileFilter("JSON File","*.json");
+			fileFilterArray.push(fileFilter);
+			
+			loadFile.browse(fileFilterArray);
+			function selectHandler(event:Event):void
+			{
+				//Max file size ~1 gig
+				if(loadFile.size>1000016){
+					Alert.show('You have uploaded a file that is Huge!','error');
+				}
+				else{
+					loadFile.load();
+					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+				}
+			}
+			function loadCompleteHandler(event:Event):void
+			{			
+				if(upload == false)
+				{
+					//This is to stop two events from occuring;
+					upload = true;
+					loadedFileData = JSONUtil.decode(loadFile.data.toString());
+					//check to see if the file is empty
+					if(loadedFileData.results[0] != null)
+					{						
+						var newArrayList:ArrayCollection = new ArrayCollection;	
+						newArrayList.addItem(loadedFileData.results[0]);
+						bDG.dataProvider = newArrayList;
+						bDG.selectedIndex = 0;
+						
+						var url:URLRequest = new URLRequest;
+						url.method = "POST";
+						url.url =urlSearchStr + "import.json?email="+emailStr;
+						
+						loadFile.upload(url,"jsonfile"); 
+						
+						zoomLocationExtent(loadedFileData.results[0]);
+						loadedFileName.text= "Your File:  "+ loadFile.name;
+					}
+					else{
+						Alert.show("Invalid File format", "File Error");
+						AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+					}	
+				}	
+			}
+			function postCompleteHandler(event:DataEvent):void
+			{
+				var obj:Array = event.data.split(" \"");
+				var obj2:Array = String(obj[2]).split("\"\n");
+				behSelectedID = obj2[0]//String(obj2[0]).split("\"")[1];
+				Alert.show(behSelectedID);
+				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+			}
+			function loadIoErrorHandler(event:Event):void
+			{
+				Alert.show(event.toString());
+				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+			}
+		}
+		
+		//zoom to location
+		private function zoomLocationExtent(object:Object):void
+		{
+			mapReset();
+			if(object.geometry != "null")
+			{
+				var geoString:String = object.geometry;
+				if(geoString != null)
+				{
+					//Use for only one (non-multiPoly) polygon
+					//Because the OpenScales object model was fucked up
+					var ra:Array = new Array();
+					var firstParse:Array = 	geoString.split("((");
+					var secParse:Array = String(firstParse[1]).split("))");
+					var thirdParse:Array = String(secParse[0]).split(",");
+					
+					for(var l:int=0; l <thirdParse.length; l++)
+					{
+						var fourthParse:Array = String(thirdParse[l]).split(" ");
+						//condition for a space " " in the array
+						if(l >0){
+							ra.push(new WebMercatorMapPoint(fourthParse[1],fourthParse[2]));
+						}
+						else{
+							ra.push(new WebMercatorMapPoint(fourthParse[0],fourthParse[1]));
+						}
+					} 
+					var geoPoly:Polygon = new Polygon;
+					
+					geoPoly.addRing(ra);
+					var graGraphic:Graphic = new Graphic(geoPoly, polygonSymbol);
+					
+					map.extent = geoPoly.extent;
+					var graphLayer:GraphicsLayer = new GraphicsLayer;
+					graphLayer.id = "bound";
+					graphLayer.add(graGraphic);
+					map.addLayer(graphLayer); 
+					noLoc.visible = false;
+				}
+				else{
+					//Alert.show("There is no Behavior Location set","Alert");
+					noLoc.visible = true;
+				}
+			}
+		}
+		private function dgClickHandler(event:ListEvent):void
+		{
+			map.removeLayer(map.getLayer("bound"));
+			goButt.setStyle("fontWeight","bold");
+			goButt.setStyle("fontSize",13);
+			zoomLocationExtent(event.itemRenderer.data);
+			behSelectedID = event.itemRenderer.data._id;
+		}
+	]]>
+</fx:Script>
+	<fx:Declarations>
+		<esri:SimpleLineSymbol id="lineSymbol" color="0x555555" width="2" alpha="1" style="solid"/>
+		<esri:SimpleFillSymbol id="polygonSymbol" color="0x999999" alpha=".5" style="solid" outline="{lineSymbol}"/>
+	</fx:Declarations>
+	<mx:VBox width="100%" height="100%" paddingTop="10" horizontalAlign="center">
+		<s:Label text="Available Behaviors" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
+		<mx:HRule width="100%"/>
+			<mx:HBox verticalAlign="middle" horizontalAlign="left" width="85%" paddingTop="3" paddingBottom="3">
+				<mx:Label fontWeight="bold" paddingLeft="0" fontSize="16" text="Select One Behavior " toolTip="Choose One Behavior" />
+				<mx:Label fontSize="13" fontWeight="bold" color="red" id="noLoc" paddingLeft="230"  text="No Location Set" visible="false" />
+				<mx:Label fontSize="13" text="Search Behaviors:" toolTip="Search Behaviors:" />
+				<mx:TextInput id="listSearchText" width="150"/>
+				<s:Button label="Search" toolTip="Search using keyword" click="search()"/>
+				<mx:CheckBox id="owned" label="Search Public Behaviors" selected="true" toolTip="Uncheck to only search your private Behaviors" />
+			</mx:HBox>
+		<mx:HRule width="100%"/>
+		<mx:DataGrid selectionColor="0xCCCCCC" id="bDG" itemClick="{dgClickHandler(event)}" dataProvider="{behaviorsList}" width="85%" rowCount="4">
+			<mx:columns>
+				<mx:DataGridColumn dataField="name"/>
+				<mx:DataGridColumn dataField="genus"/>
+				<mx:DataGridColumn dataField="common_name" headerText="common name"/>
+				<mx:DataGridColumn dataField="species"/>
+				<mx:DataGridColumn dataField="created"/>
+				<mx:DataGridColumn dataField="notes"/>
+				<mx:DataGridColumn headerText="owner" dataField="status"/>
+				<mx:DataGridColumn dataField="user"/>
+				<!--<mx:DataGridColumn dataField="geometry"/>-->
+			</mx:columns>
+		</mx:DataGrid>
+		<mx:HBox verticalAlign="middle" paddingTop="4">
+			<s:Label id="loadedFileName" fontWeight="bold" fontSize="13" toolTip="Your File" click="onUpload()"/>
+			<s:Button label="Upload New Behavior File" toolTip="Upload Behavior File" click="onUpload()"/>
+			<s:Button label="Create New Behavior" toolTip="Navigate to Behavior Page" click="navigateToURL(new URLRequest('http://larva-library.herokuapp.com/'), 'AGOL')"/>
+			<s:Button label="Refresh List" toolTip="Refresh values if Behaviors have been changed" click="refreshValues()"/>
+			<s:Button label="Next" id="goButt" toolTip="Go to Run Model Page" click="nextTab()"/>
+			<s:CheckBox label="Edit Behavior" id="editFirst" selected="false" toolTip="Check to Edit configuration" />
+		</mx:HBox>
+		<esri:Map id="map" wrapAround180="true" width="85%" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" height="280" />
+	</mx:VBox>
+</mx:Canvas>

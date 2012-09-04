@@ -1,0 +1,44 @@
+@namespace s "library://ns.adobe.com/flex/spark";
+@namespace esri "http://www.esri.com/2008/ags";
+@namespace mx "library://ns.adobe.com/flex/mx";
+
+esri|Navigation
+{
+	skinClass: ClassReference("com.skins.slider");
+}
+mx|TabNavigator {
+	cornerRadius: 0;
+	tabStyleName: "MyTabs";
+	firstTabStyleName: "MyFirstTab";
+	lastTabStyleName: "MyLastTab";
+	selectedTabTextStyleName: "MySelectedTab";
+}
+mx|ToggleButtonBar{
+	selectedButtonTextStyleName:"mySelectedButtonTextStyleName";
+}
+.mySelectedButtonTextStyleName {
+	color: #FF3333;
+	font-weight:bold;
+}
+
+.MyTabs {
+	cornerRadius: 0;
+	color: black;
+	fontSize: 16;
+}
+
+.MyFirstTab,
+.MyLastTab {
+	cornerRadius: 0;
+	color: black;
+	fontSize: 16;
+	fontWeight: normal;
+}
+
+.MySelectedTab {
+	cornerRadius: 0;
+	fontWeight: bold;
+	color: black;
+	fontSize: 17;
+	textRollOverColor: #336699;
+}

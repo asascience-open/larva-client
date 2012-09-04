@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" xmlns:cl="com.classes.*"
+		   xmlns:mx="library://ns.adobe.com/flex/mx" >
+	<fx:Script>
+		<![CDATA[
+			import com.classes.*;
+			import com.esri.ags.utils.JSONUtil;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.StateChangeEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			
+			[Bindable]
+			public var behaviorid:String = new String;
+			[Bindable]
+			public var urlSearchStr:String = "";
+			[Bindable]
+			public var emailStr:String = "";
+			[Bindable]
+			private var behObj:Object = new Object;
+			[Bindable]
+			private var jsonResult:Object = new Object;
+			
+			private function showPage(event:AppEvent):void{
+				if(event.data.step == "edit")
+				{
+					init();
+				}
+			}
+			private function init():void
+			{
+				statusSave.text = "";
+				tabStage.removeAllElements();
+				AppEvent.addListener(AppEvent.EXIT_APP, exitApp);
+				AppEvent.addListener(AppEvent.SET_APP_STATUS, showPage);
+				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+				var emailservrequest:HTTPService = new HTTPService();
+				emailservrequest.addEventListener(ResultEvent.RESULT, idservice);
+				emailservrequest.url = urlSearchStr+behaviorid+".json";
+				emailservrequest.resultFormat = "object";
+				emailservrequest.addEventListener(FaultEvent.FAULT, loadError);
+				emailservrequest.send();	
+				function idservice(event:ResultEvent): void
+				{
+					jsonResult = JSONUtil.decode(event.result.toString());
+					
+					behObj = behavior.convertTimeObject(jsonResult.results);
+					loadStages(behObj);
+					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+				}
+				function loadError(event:FaultEvent): void{
+					Alert.show("Service Error");
+					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+				}
+			}
+			
+			private function loadStages(behavior:Object):void
+			{
+				//bName.text = behavior[0].name;
+				bCommon.text = behavior[0].common_name;
+				bGenus.text = behavior[0].genus;
+				bSpecies.text = behavior[0].species;
+				
+				var arrayCol:Array = new Array(behavior[0].lifestages);
+				for(var l:int=0; l <arrayCol[0].length; l++)
+				{
+					var lifeWind:LifeStageWindow = new LifeStageWindow;
+					lifeWind.stageL = arrayCol[0][l];
+					lifeWind.label = arrayCol[0][l].name;
+					tabStage.addElement(lifeWind);
+				}
+			}
+			
+			private function saveStages():void
+			{
+				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+//Write out object				
+				var behaviorObject:Object = jsonResult;
+				
+				//behaviorObject[]=
+				
+				
+				
+				/* var editurlService:HTTPService = new HTTPService;
+				//var url:URLRequest = new URLRequest;
+				//url.method = "POST";
+				//url.url =urlSearchStr + "import.json?email="+emailStr;
+				editurlService.url = urlSearchStr+ "import.json?email="+emailStr;
+				editurlService.method = "POST";
+				editurlService.addEventListener(ResultEvent.RESULT,runCompleteHandler);
+				editurlService.addEventListener(FaultEvent.FAULT,loadErrorHandler);
+				
+				//convert to JSON
+				var json:Object = new Object;
+				//json["config"] = JSONUtil.encode(modelObject);
+				json["jsonfile"] = JSONUtil.encode(behaviorObject);
+				editurlService.send(json);	
+				function runCompleteHandler(event:ResultEvent):void
+				{
+					var rsult:Object = JSON.parse(event.result.toString());
+					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+					statusSave.text = "Saved";
+				}
+				function loadErrorHandler(event:FaultEvent):void
+				{
+					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+					statusSave.text = "Error.";
+				} */
+			}
+			
+			private function exitApp(event:AppEvent):void
+			{
+				behObj = null;
+				//bName.text = "";
+				bCommon.text = "";
+				bGenus.text = "";
+				bSpecies.text= "";
+			}
+			private function back():void
+			{
+				var object:Object = new Object();
+				object["step"] = "behave";
+				AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
+			}
+			private function runModel():void
+			{
+				var object:Object = new Object();
+				object["step"] = "currents";
+				object["id"] = behaviorid;
+				AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+	</fx:Declarations>
+	<mx:VBox width="100%" height="100%" paddingTop="6" horizontalAlign="center">
+		<s:Label text="Edit Behavior" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>		
+		<mx:HRule width="100%"/>
+			<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
+				<!--<mx:Label fontWeight="bold" fontSize="15" text="Name:" />
+				<mx:Label fontWeight="bold" id="bName"  fontSize="14"  color="#FFFFFF"/>-->
+				<mx:Label fontWeight="bold" fontSize="15" text="Species:" />
+				<mx:Label  fontWeight="bold" id="bSpecies"  fontSize="14"  color="#FFFFFF"/>
+				<mx:Label fontWeight="bold"  fontSize="15" text="Common Name:" />
+				<mx:Label fontWeight="bold" id="bCommon"  fontSize="14" color="#FFFFFF"/>
+				<mx:Label fontWeight="bold" fontSize="15" text="Genus:" />
+				<mx:Label fontWeight="bold" id="bGenus"  fontSize="14" color="#FFFFFF" />
+			</mx:HBox>
+		<mx:HRule width="100%"/>
+		<mx:HBox verticalAlign="middle" visible="true" backgroundColor="0xCCCCCC" horizontalAlign="center" width="100%" height="100%" paddingTop="0" paddingBottom="0">
+			<mx:TabNavigator resizeToContent="true" tabHeight="28" paddingTop="0" borderStyle="none" backgroundColor="0xCCCCCC" verticalGap="0" fontWeight="bold" id="tabStage" width="85%" height="100%"/>
+		</mx:HBox>
+		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="100%" height="36" paddingTop="2" paddingBottom="3">
+			<s:Button fontWeight="bold" fontSize="14" label="Choose Different Behavior" id="goBack" toolTip="Go Back" click="back()"/>
+			<s:Button fontWeight="bold" fontSize="14" label="Next Step" id="goButt" toolTip="Go to Forcing Page" click="runModel()"/>
+			<s:Button fontWeight="bold" fontSize="14" label="Save Edits" id="saveButt" toolTip="Save Edits" click="saveStages()"/>
+			<s:Label id="statusSave" color="#FF3333"/>
+		</mx:HBox>
+	</mx:VBox>
+</mx:Canvas>

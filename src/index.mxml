@@ -1,32 +1,119 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
 			   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" pageTitle="LarvaMap"
-			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="955" minHeight="600">
-	
+			   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:com="com.windows.*" xmlns:cl="com.classes.*" minWidth="955" minHeight="600">
+	<fx:Style source="style.css"/>
 	<fx:Script>
+		
 		<![CDATA[
+			import com.classes.*;
+			import com.esri.ags.layers.GraphicsLayer;
+			import com.esri.ags.utils.JSONUtil;
+			
+			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
+			import mx.events.ItemClickEvent;
 			import mx.events.StateChangeEvent;
 			import mx.events.ValidationResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			
+			[Bindable]
+			[Embed("assets/images/display_setting.png")]
+			private var behImg:Class;
+			[Bindable]
+			[Embed("assets/images/sar.gif")]
+			private var editImg:Class;
+			[Bindable]
+			[Embed("assets/images/oil.gif")]
+			private var forceImg:Class;
+			[Bindable]
+			[Embed("assets/images/chemical.png")]
+			private var modelImg:Class;
+			[Bindable]
+			[Embed("assets/images/legend_icon_13.png")]
+			private var statusImg:Class;
 			
 			private var configMain:XML = new XML;
+			[Bindable]private var emailUrl:String = "";
+			[Bindable]private var searchUrl:String = "";
+			[Bindable]private var currentsUrl:String = "";
+			[Bindable]private var backgroundMapURL:String = "";
+			[Bindable]private var modelURL:String = "";
+			[Bindable]private var modelrunsURL:String = "";
+			//behaviorList
+			[Bindable]private var behList:Object = new Object;
+			//behavior for Model run
+			[Bindable]private var beh:String = "";
+			[Bindable]private var forcingURL:String = "";
+			[Bindable]private var forcingDomainLayer:GraphicsLayer = new GraphicsLayer;
 			
 			private function init():void
 			{
 				var configLoader:URLLoader=new URLLoader(new URLRequest("config/lmconfig.xml"));
 				configLoader.addEventListener(Event.COMPLETE, httpService_result);
 				configLoader.addEventListener(IOErrorEvent.IO_ERROR, httpService_fault);
+				
+				AppEvent.addListener(AppEvent.SET_APP_STATUS, sharedDataUpdated);
+				AppEvent.addListener(AppEvent.SET_APP_PROGRESS_ON, turnProgressOn);
+				AppEvent.addListener(AppEvent.SET_APP_PROGRESS_OFF, turnProgressOff);
+			}
+			
+			private function turnProgressOn(event:AppEvent):void{
+				loaderStat.visible = true;
+			}
+			
+			private function turnProgressOff(event:AppEvent):void{
+				loaderStat.visible = false;
+			}
+			
+			private function sharedDataUpdated(event:AppEvent):void
+			{
+				beh = event.data.id;
+				if(event.data.step == "edit")
+				{
+					myViewStack.selectedIndex = 2;
+					toggleTools.selectedIndex = 1;
+				}
+				else if(event.data.step == "currents")
+				{
+					myViewStack.selectedIndex = 3;
+					toggleTools.selectedIndex = 2;
+				}
+				else if(event.data.step == "behave"){
+					myViewStack.selectedIndex = 1;
+					toggleTools.selectedIndex = 0;
+				}
+				else{
+					currentsUrl = event.data.currentsURL;
+					forcingDomainLayer = event.data.currentsDomain;
+					if(currentsUrl != ""){
+						myViewStack.selectedIndex = 4;
+						toggleTools.selectedIndex = 3;
+					}
+					else{
+						Alert.show("Please select a forcing Dataset","Alert")
+						myViewStack.selectedIndex = 3;
+						toggleTools.selectedIndex = 2;
+					}
+				}
 			}
 			
 			private function httpService_fault(evt:IOErrorEvent):void {
+				Alert.show("Problem Loading Config","Error");
 			}
 			
 			private function httpService_result(evt:Event):void 
 			{
 				configMain = new XML(evt.currentTarget.data);
 				//the application is loading before it can get the Main Config URL 
-				//LoginWSURLString=configXML.LoginWSURL.toString();
-				//userManagementWSURString=configXML.UserManagementWSURL.toString();
+				emailUrl=configMain.urlEmail.toString();
+				searchUrl=configMain.urlSearch.toString();
+				backgroundMapURL=configMain.backgroundURL.toString();
+				forcingURL=configMain.forcing.toString();
+				modelURL=configMain.model.toString();
+				modelrunsURL=configMain.modelrunsURL.toString();
 			}
 			
 			private function enterClick(event:MouseEvent):void
@@ -42,21 +129,77 @@
 			
 			private function enterApp():void
 			{
-				toggleTools.visible = true;
-				myViewStack.selectedIndex = 2;
-				login.text = emailTExt.text;
+				statusStr.visible = true;
+				var emailservrequest:HTTPService = new HTTPService();
+				emailservrequest.addEventListener(ResultEvent.RESULT, emailservice);
+				emailservrequest.url = emailUrl+emailTExt.text;
+				emailservrequest.resultFormat = "object";
+				emailservrequest.addEventListener(FaultEvent.FAULT, loadError);
+				emailservrequest.send();	
+				loaderStat.visible = true;
 				loginPanel.visible = true;
+				function emailservice(event:ResultEvent): void
+				{
+					var jsResult:Object = JSONUtil.decode(event.result.toString());
+					
+					myViewStack.selectedIndex = 1;
+					behList = behavior.convertTimeObject(jsResult.results);
+					login.text = emailTExt.text;
+					headerBar.visible = true;
+					loaderStat.visible = false;
+					toggleTools.selectedIndex = 0;
+					statusStr.visible = false;
+				}
+				function loadError(event:FaultEvent): void{
+					Alert.show("Service Error");
+					loginPanel.visible = false;
+					statusStr.visible = false;
+				}
+				
 			}
+			
 			private function checkEmail(event:Event):void
 			{
 				emailValidator.validate(emailTExt.text);
 			}
-			private function toggleChange(event:StateChangeEvent):void
+			private function toggleChange(event:ItemClickEvent):void
 			{
-				myViewStack.selectedIndex = toggleTools.selectedIndex + 2;
+				beh = behWindow.behSelectedID;
+				var obj:Object = new Object;
+				obj["step"]= toggleTools.dataProvider[toggleTools.selectedIndex].value;
+				obj["id"]=beh;
+				obj["currentsURL"]= currentsUrl;
+				//Check for editable behavior
+				if(toggleTools.selectedIndex == 4||toggleTools.selectedIndex == 0){
+					myViewStack.selectedIndex = toggleTools.selectedIndex +1;
+				}
+				else if(beh == ""){
+					Alert.show("Please select Behavior","Alert");
+					myViewStack.selectedIndex = 1;
+					toggleTools.selectedIndex = 0;
+				}
+				else if(currentsUrl == ""||forcingDomainLayer.numChildren>0){
+					Alert.show("Please select a forcing Dataset","Alert")
+					myViewStack.selectedIndex = 3;
+					toggleTools.selectedIndex = 2;
+				}
+				else{
+					//Go to tab
+					forcingDomainLayer = forc.graphLayer;
+					AppEvent.dispatch(AppEvent.SET_APP_STATUS,obj);
+					myViewStack.selectedIndex = toggleTools.selectedIndex +1;
+				}
 			}
 			private function emailValidator_invalid(evt:ValidationResultEvent):void {
 				Alert.show(evt.message);
+			}
+			private function exit():void
+			{
+				//go back to main page
+				myViewStack.selectedIndex = 0;
+				loginPanel.visible = false;
+				headerBar.visible = false;
+				AppEvent.dispatch(AppEvent.EXIT_APP,"");
 			}
 		]]>
 	</fx:Script>
@@ -64,24 +207,28 @@
 	<fx:Declarations>
 		<mx:EmailValidator id="emailValidator" valid="enterApp()" invalid="emailValidator_invalid(event);"/>
 		<fx:Array id="arr">
-			<fx:Object label="Behavior"/>
-			<fx:Object label="Model"/>
+			<fx:Object label="Behaviors" value="behave" img="{behImg}"/>
+			<fx:Object label="Edit Behavior" value="edit" img="{editImg}"/>
+			<fx:Object label="Forcing" value="currents" img="{forceImg}"/>
+			<fx:Object label="Run Model" value="model" img="{modelImg}"/>
+			<fx:Object label="Your Models" value="status" img="{statusImg}"/>
 		</fx:Array>
 		<s:Fade id="fade" duration="3000" />
 	</fx:Declarations>
 	<s:layout>
 		<s:VerticalLayout/>
 	</s:layout>
-	<mx:HBox width="100%" backgroundColor="#096BFF" verticalAlign="middle"
+	<mx:HBox width="100%" backgroundColor="#336699" verticalAlign="middle"
 			 height="52" fontSize="17">
 		<s:Label width="200" color="#FAF7F7" fontFamily="Verdana" fontSize="23" fontWeight="bold"
 				 paddingLeft="10" text="LarvaMap" />
-		<mx:HBox width="100%" verticalAlign="middle" horizontalAlign="center">
-			<mx:ToggleButtonBar currentStateChange="toggleChange(event)" id="toggleTools" visible="false" selectedButtonTextStyleName="mySelectedButtonTextStyleName" dataProvider="{arr}"/>
+		<mx:HBox width="100%" verticalAlign="middle" horizontalAlign="center" id="headerBar" visible="false">
+			<mx:ToggleButtonBar  fontSize="14" buttonWidth="130" itemClick="toggleChange(event)" id="toggleTools" iconField="img" visible="true" selectedButtonTextStyleName="mySelectedButtonTextStyleName" dataProvider="{arr}"/>
 		</mx:HBox>
-		<mx:HBox width="200" id="loginPanel" paddingRight="4" verticalAlign="middle"  visible="false">
-			<s:Label id="login" color="#FAF7F7" fontFamily="Verdana" fontSize="13" fontWeight="bold" />
-			<s:Label  color="#C9C9C9"  text="Exit" textDecoration="underline"  fontFamily="Verdana" fontSize="12" fontWeight="bold"/>
+		<mx:HBox width="310" horizontalScrollPolicy="off" id="loginPanel" verticalAlign="middle" horizontalAlign="right"  visible="false">
+			<mx:ProgressBar labelPlacement="center" label="" color="0x404040" id="loaderStat" visible="false" height="16" indeterminate="true" width="66"/>
+			<mx:Label maxWidth="199" id="login" color="#FAF7F7" fontFamily="Verdana" fontSize="12" fontWeight="bold" />			
+			<s:Label color="#C9C9C9" paddingRight="4"  buttonMode="true" useHandCursor="true" width="30" text="Exit" textDecoration="underline"  fontFamily="Verdana" fontSize="12" click="exit()" fontWeight="bold"/>
 		</mx:HBox>
 	</mx:HBox>
 	
@@ -90,10 +237,13 @@
 			<s:BorderContainer width="100%" height="100%" borderWeight="0" backgroundImage="@Embed('/assets/fish.jpg')">
 				<s:VGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"
 						  y="-9">
-					<mx:HBox id="loginBox" backgroundColor="0xCCCCCC" showEffect="fade" cornerRadius="8" alpha=".8" visible="false" width="370" height="70" verticalAlign="middle">
-						<s:Label paddingLeft="15" text="Enter Email:" fontWeight="bold" fontSize="15" width="125"/>
-						<s:TextInput enter="checkEmail(event)" id="emailTExt" width="210"/>
-					</mx:HBox>
+					<mx:VBox id="loginBox" backgroundColor="0xCCCCCC" showEffect="fade" cornerRadius="8" alpha=".8" visible="false" width="370" height="70" verticalAlign="middle">
+						<mx:HBox>
+							<s:Label paddingLeft="15" text="Enter Email:" fontWeight="bold" fontSize="15" width="125"/>
+							<s:TextInput enter="checkEmail(event)" id="emailTExt" width="210"/>
+						</mx:HBox>
+						<s:Label paddingLeft="15" text="Just Wait, it's going to be Awesome." fontWeight="bold" visible="false" color="#FF3333" id="statusStr"/>
+					</mx:VBox>
 					<s:Button label="Login" id="butLog"
 							  width="120" height="45"
 							  click="enterClick(event)" color="#096BFF"
@@ -103,13 +253,19 @@
 			</s:BorderContainer>
 		</s:NavigatorContent>
 		<s:NavigatorContent>
-			
+			<com:Behaviors id="behWindow" backgroundMapU="{backgroundMapURL}" emailStr="{emailTExt.text}" emailUrlStr="{emailUrl+emailTExt.text}" urlSearchStr="{searchUrl}" behaviorsList="{behList}"/>
 		</s:NavigatorContent>
 		<s:NavigatorContent>
-			
+			<com:EditBehavior id="edit" behaviorid="{beh}" emailStr="{emailTExt.text}" urlSearchStr="{searchUrl}"/>		
 		</s:NavigatorContent>
 		<s:NavigatorContent>
-			
+			<com:ForcingWin id="forc" behaviorid="{beh}" forcingURL="{forcingURL}" backgroundMapU="{backgroundMapURL}"/>		
+		</s:NavigatorContent>
+		<s:NavigatorContent>
+			<com:ModelRun id="modelRun" forcingDomain="{forcingDomainLayer}" behavior="{beh}" urlStr="{searchUrl}" emailStr="{emailTExt.text}" modelstr="{modelURL}" datasetCurrents="{currentsUrl}" backgroundMapU="{backgroundMapURL}"/>		
+		</s:NavigatorContent>
+		<s:NavigatorContent>
+			<com:RunningModels id="models" modelrunsURL="{modelrunsURL}" backgroundMapU="{backgroundMapURL}"/>
 		</s:NavigatorContent>
 	</mx:ViewStack>
 </s:Application>

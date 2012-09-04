@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()" horizontalScrollPolicy="off"
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC"
+		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
+<fx:Script>
+	<![CDATA[
+		import com.classes.*;
+		import com.esri.ags.utils.JSONUtil;
+		
+		import mx.collections.ArrayCollection;
+		import mx.controls.Alert;
+		import mx.rpc.http.HTTPService;
+
+		[Bindable]
+		public var stageL:Object = new Object;
+		
+		
+		private function init():void
+		{
+			durT.value = stageL.duration;
+			
+			linAT.text = formatNumStr(stageL.linear_a);
+			linBT.text = formatNumStr(stageL.linear_b);
+			
+			if(stageL.settlement != null)
+			{
+				lowSettle.text = formatNumStr(stageL.settlement.lower);
+				upSettle.text = formatNumStr(stageL.settlement.upper);
+			}
+			if(stageL.capability != "null")
+			{
+				vssT.text = formatNumStr(stageL.capability.vss);
+				varT.text = formatNumStr(stageL.capability.variance);
+				//noswim
+				if(stageL.capability.nonswim_turning == "random"){
+					noswimT.selectedIndex=2;
+				}
+				else if(stageL.capability.nonswim_turning == "downward"){
+					noswimT.selectedIndex=0;
+				}
+				else{
+					noswimT.selectedIndex=1;
+				}
+				//swim
+				if(stageL.capability.swim_turning == "random"){
+					swimT.selectedIndex = 1;
+				}
+				else{
+					swimT.selectedIndex = 0;
+				}
+				
+				//For Diel
+				var arrayDiel:Array = new Array(stageL.diel);
+				for(var l:int=0; l <arrayDiel[0].length; l++)
+				{
+					var dielWind:DielWindow = new DielWindow;
+					dielWind.minD = arrayDiel[0][l].min;
+					dielWind.maxD = arrayDiel[0][l].max;
+					dielWind.label = "Diel "+(l+1);
+					if(arrayDiel[0][l].type == "cycles")
+					{
+						if(arrayDiel[0][l].plus_or_minus == "+"){
+							dielWind.selectedIndexPlus= 0;
+						}
+						else{
+							dielWind.selectedIndexPlus = 1;
+						}
+						
+						if(arrayDiel[0][l].cycle == "sunset"){
+							dielWind.selectedSun = 0;
+						}
+						else{
+							dielWind.selectedSun = 1;
+						} 
+						dielWind.sunHour = arrayDiel[0][l].hours;
+					}
+					else{
+						dielWind.selectedIndex = 1;
+						var specDate:Date = new Date(arrayDiel[0][l].time);
+						dielWind.specificDate =specDate;
+					}
+					dielWindow.addChild(dielWind);
+				}
+				
+				//For Taxis
+				var arrayTax:Array = new Array(stageL.taxis);
+				for(var t:int=0; t <arrayTax[0].length; t++)
+				{
+					var taxWind:TaxWindow = new TaxWindow;
+					taxWind.gradientT = arrayTax[0][t].gradient;
+					taxWind.minT = arrayTax[0][t].min;
+					taxWind.maxT = arrayTax[0][t].max;
+					taxWind.label = "Taxis "+(t+1);
+					if(arrayTax[0][t].variable == "sea_water_salinity"){
+						taxWind.selectedIndexSeaW = 0;
+					}
+					else{
+						taxWind.selectedIndexSeaW = 1;
+					}
+					taxisWindow.addElement(taxWind);
+				}
+			}
+		}
+		private function formatNumStr(str:String):String{
+			if(str == "null"){
+				return "";
+			}
+			else{
+				return str;
+			}
+		}
+		private function refreshValues():void
+		{
+			
+		}
+	]]>
+</fx:Script>
+	<mx:VBox width="100%" paddingTop="8" horizontalAlign="center">
+		<mx:HBox width="90%" verticalAlign="middle" horizontalAlign="left">
+			<s:Label fontWeight="bold" fontSize="14" width="70" text="Duration:"/>
+			<s:NumericStepper id="durT"/>
+			<s:Label fontWeight="bold" fontSize="13" width="58"  text="days"/>
+			<s:Label fontWeight="bold" fontSize="14" width="70"  text="Linear A:"/>
+			<cl:NumberInput fractionalDigits="5" width="70" id="linAT"/>
+			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="70" text="Linear B:"/>
+			<cl:NumberInput fractionalDigits="5" width="70" id="linBT"/>
+			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="130" text="Upper Settlement:"/>
+			<cl:NumberInput fractionalDigits="5"  width="70" id="upSettle"/>
+			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="130" text="Lower Settlement:"/>
+			<cl:NumberInput fractionalDigits="5" width="70" id="lowSettle"/>
+		</mx:HBox>
+		<mx:HRule width="100%"/>
+		<s:Label fontWeight="bold" text="Capability" fontSize="16"/>
+		<mx:HRule width="100%"/>
+		<!--Capability-->
+		<mx:HBox width="800" paddingTop="5" verticalAlign="middle" horizontalAlign="left">
+			<s:Label fontWeight="bold" fontSize="14" width="220"  text="Swim Turning:"/>
+			<mx:ComboBox selectionColor="#CAE8E8" id="swimT" width="285">
+				<mx:dataProvider>
+					<mx:ArrayList>
+						<fx:Object label="Reverses swimming direction" value="reverse"/>
+						<fx:Object label="Random selection of swimming direction" value="random"/>
+					</mx:ArrayList>
+				</mx:dataProvider>
+			</mx:ComboBox>
+			<s:Label fontWeight="bold" paddingLeft="20" fontSize="14" width="100"  text="VSS:"/>
+			<cl:NumberInput fractionalDigits="5" id="vssT" width="80"/>
+		</mx:HBox>
+		<mx:HBox paddingTop="5" paddingBottom="5" width="800" verticalAlign="middle" horizontalAlign="left">
+			<s:Label fontWeight="bold" fontSize="14" width="220"  text="Non-Swim Turning:"/>
+			<mx:ComboBox selectionColor="#CAE8E8" id="noswimT" width="285">
+				<mx:dataProvider>
+					<mx:ArrayList>
+						<fx:Object label="Always swim downward" value="downward"/>
+						<fx:Object label="Always swim upward" value="upward"/>
+						<fx:Object label="Random selection of swimming direction" value="random"/>
+					</mx:ArrayList>
+				</mx:dataProvider>
+			</mx:ComboBox>
+			<s:Label fontWeight="bold" paddingLeft="20" fontSize="14" width="100"  text="Variance:"/>
+			<cl:NumberInput fractionalDigits="5" id="varT" width="80"/>
+		</mx:HBox>
+		<!--Diel-->
+		<mx:HRule width="100%" />
+			<s:Label fontWeight="bold" text="Diel" fontSize="16"/>
+		<mx:HRule width="100%"/>
+		<mx:HBox paddingTop="3" paddingBottom="3" horizontalScrollPolicy="auto" id="dielWindow">
+			
+		</mx:HBox>
+		<!--Taxis-->
+		<mx:HRule width="100%" />
+			<s:Label fontWeight="bold" text="Taxis" fontSize="16"/>
+		<mx:HRule width="100%"/>
+		<mx:HBox paddingTop="3" paddingBottom="3" id="taxisWindow" horizontalScrollPolicy="auto">
+			
+		</mx:HBox>
+	</mx:VBox>
+</mx:Canvas>

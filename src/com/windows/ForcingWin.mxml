@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:esri="http://www.esri.com/2008/ags" >
+	<fx:Script>
+		<![CDATA[
+			import com.classes.*;
+			import com.classes.AppEvent;
+			import com.esri.ags.Graphic;
+			import com.esri.ags.SpatialReference;
+			import com.esri.ags.geometry.Extent;
+			import com.esri.ags.geometry.Polygon;
+			import com.esri.ags.geometry.WebMercatorMapPoint;
+			import com.esri.ags.layers.ArcGISTiledMapServiceLayer;
+			import com.esri.ags.layers.GraphicsLayer;
+			import com.esri.ags.utils.JSONUtil;
+			
+			import mx.controls.Alert;
+			import mx.events.ListEvent;
+			import mx.events.StateChangeEvent;
+			import mx.events.ValidationResultEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.rpc.http.HTTPService;
+			
+			[Bindable]
+			public var forcingURL:String = new String;
+			[Bindable]
+			public var behaviorid:String = new String;
+			[Bindable]
+			public var forcingCurrentList:Object = new Object;
+			[Bindable]
+			public var backgroundMapU:String = "";
+			private var spatRef:SpatialReference = new SpatialReference(4326);
+			private var spatRefWM:SpatialReference = new SpatialReference(102100);
+			private var mapExtent:Extent = new Extent(-11294052,-4175045,5221238,6822104,spatRefWM);
+			[Bindable]
+			public var graphLayer:GraphicsLayer = new GraphicsLayer;
+			
+			private function init():void
+			{
+				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+				var backgroundMap:ArcGISTiledMapServiceLayer = new ArcGISTiledMapServiceLayer(backgroundMapU);
+				map.addLayer(backgroundMap);
+				AppEvent.addListener(AppEvent.EXIT_APP, exitApp);
+				map.extent = mapExtent;
+				AppEvent.addListener(AppEvent.SET_APP_STATUS, enterAgain);
+				enterPage();
+			}
+			private function enterAgain(event:AppEvent):void{
+				if(event.data.step == "currents")
+				{
+					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+					enterPage();
+				}
+			}
+			
+			private function enterPage():void
+			{
+				//Check to see if a data set has been selected
+				if(bDG.selectedIndex<0)
+				{
+					var forcingservrequest:HTTPService = new HTTPService();
+					forcingservrequest.addEventListener(ResultEvent.RESULT, forceservice);
+					
+					forcingservrequest.url = forcingURL;
+					forcingservrequest.resultFormat = "object";
+					forcingservrequest.addEventListener(FaultEvent.FAULT, loadError);
+					forcingservrequest.send();	
+					function forceservice(event:ResultEvent): void
+					{
+						var jsResult:Object = JSONUtil.decode(event.result.toString());
+						forcingCurrentList = behavior.convertTimeObjectCurrents(jsResult.results);
+					}
+					function loadError(event:FaultEvent): void{
+						Alert.show("Service Error");
+					}
+				}
+				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+			}
+			
+			private function exitApp(event:AppEvent):void
+			{
+				mapReset();
+			}
+			private function mapReset():void{
+				map.removeLayer(map.getLayer("bound"));
+				map.extent = mapExtent;
+			}
+			private function back():void
+			{
+				var object:Object = new Object();
+				object["step"] = "edit";
+				object["id"] = behaviorid;
+				AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
+			}
+			private function runModel():void
+			{
+				if(bDG.selectedIndex>-1)
+				{	
+					var object:Object = new Object();
+					object["step"] = "model";
+					object["id"] = behaviorid;
+					object["currentsURL"] = bDG.selectedItem.location;
+					object["currentsDomain"] = graphLayer;
+					AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
+				}
+				else{
+					Alert.show("Please select dataset",'Alert');
+				}
+			}
+			private function dgClickHandler(event:ListEvent):void
+			{
+				map.removeLayer(map.getLayer("bound"));
+				goButt.setStyle("fontWeight","bold");
+				goButt.setStyle("fontSize",13);
+				zoomLocationExtent(event.itemRenderer.data);
+			}
+			//zoom to location
+			private function zoomLocationExtent(object:Object):void
+			{
+				mapReset();
+				if(object.geometry != "null")
+				{
+					var geoString:String = object.bbox;
+					if(geoString != null)
+					{
+						//Use for only one (non-multiPoly) polygon
+						//Because the OpenScales object model was fucked up
+						var ra:Array = new Array();
+						var firstParse:Array = 	geoString.split("((");
+						var secParse:Array = String(firstParse[1]).split("))");
+						var thirdParse:Array = String(secParse[0]).split(",");
+						
+						for(var l:int=0; l <thirdParse.length; l++)
+						{
+							var fourthParse:Array = String(thirdParse[l]).split(" ");
+							//condition for a space " " in the array
+							if(l >0){
+								ra.push(new WebMercatorMapPoint(fourthParse[1],fourthParse[2]));
+							}
+							else{
+								ra.push(new WebMercatorMapPoint(fourthParse[0],fourthParse[1]));
+							}
+						} 
+						var geoPoly:Polygon = new Polygon;
+						
+						geoPoly.addRing(ra);
+						var graGraphic:Graphic = new Graphic(geoPoly, polygonSymbol);
+						
+						map.extent = geoPoly.extent;
+						graphLayer.id = "bound";
+						graphLayer.add(graGraphic);
+						map.addLayer(graphLayer); 
+					}
+					else{
+					}
+				}
+			}
+		]]>
+	</fx:Script>
+	
+	<fx:Declarations>
+		<esri:SimpleLineSymbol id="lineSymbol" color="0x555555" width="2" alpha="1" style="solid"/>
+		<esri:SimpleFillSymbol id="polygonSymbol" color="0x999999" alpha=".5" style="solid" outline="{lineSymbol}"/>
+	</fx:Declarations>
+	<mx:VBox width="100%" height="100%" paddingTop="10" horizontalAlign="center">
+		<s:Label text="Forcing" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
+		
+		<mx:HRule width="100%"/>
+			<mx:VBox height="160" verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" verticalScrollPolicy="off" paddingBottom="1">
+				<mx:Label fontWeight="bold" paddingLeft="0" fontSize="16" text="Select a Currents Dataset"  />
+				
+				<mx:DataGrid selectionColor="0xCCCCCC" id="bDG" itemClick="{dgClickHandler(event)}" dataProvider="{forcingCurrentList}" width="85%" rowCount="4">
+					<mx:columns>
+						<mx:DataGridColumn dataField="name" minWidth="150"/>
+						<mx:DataGridColumn headerText="Start Time" dataField="starting"/>
+						<mx:DataGridColumn headerText="End Time" dataField="ending"/>
+						<mx:DataGridColumn headerText="Last Updated" dataField="updated"/>
+						<mx:DataGridColumn dataField="location" minWidth="150" headerText="URL"/>
+					</mx:columns>
+				</mx:DataGrid>
+			</mx:VBox>
+		<mx:HRule width="100%"/>
+			<mx:VBox height="61" verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
+				<mx:Label fontWeight="bold" paddingLeft="0" fontSize="16" text="Select a Winds Dataset (disabled)"  />
+				<mx:ComboBox fontWeight="bold" paddingLeft="0" width="280" id="currentWinds" fontSize="16" enabled="false" toolTip="Choose Winds - Not Available" />
+			</mx:VBox>
+		<mx:HRule width="100%"/>
+		<esri:Map id="map" wrapAround180="true" width="85%" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" height="100%" />
+		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="100%" height="35" paddingTop="3" paddingBottom="3">
+			<s:Button fontWeight="bold" fontSize="14" label="Back" id="goBack" toolTip="Go Back" click="back()"/>
+			<s:Button fontWeight="bold" fontSize="14" label="Next Step" id="goButt" toolTip="Go to Model Page" click="runModel()"/>
+		</mx:HBox>
+	</mx:VBox>
+</mx:Canvas>
