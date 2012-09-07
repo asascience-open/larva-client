@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF" 
 		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:esri="http://www.esri.com/2008/ags" >
 	<fx:Script>
 		<![CDATA[
 			import com.classes.*;
-			import com.classes.AppEvent;
 			import com.esri.ags.Graphic;
 			import com.esri.ags.SpatialReference;
 			import com.esri.ags.geometry.Extent;
@@ -13,11 +12,12 @@
 			import com.esri.ags.geometry.WebMercatorMapPoint;
 			import com.esri.ags.layers.ArcGISTiledMapServiceLayer;
 			import com.esri.ags.layers.GraphicsLayer;
+			import com.esri.ags.symbols.SimpleMarkerSymbol;
 			import com.esri.ags.utils.JSONUtil;
+			import com.skins.ToolTipSkin;
 			
 			import mx.controls.Alert;
-			import mx.events.StateChangeEvent;
-			import mx.events.ValidationResultEvent;
+			import mx.events.ToolTipEvent;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.http.HTTPService;
@@ -42,7 +42,9 @@
 			}
 			
 			private function enterAgain(event:AppEvent):void{
-				refresh();
+				if(event.data.step == "status"){
+					refresh();
+				}
 			}
 			
 			private function refresh():void
@@ -110,34 +112,52 @@
 						//condition for a space " " in the array
 						if(l >0){
 							ra.push(new WebMercatorMapPoint(fourthParse[1],fourthParse[2]));
+							if(l == thirdParse.length-1){
+								var endGraphicMarker:Graphic = new Graphic(new WebMercatorMapPoint(fourthParse[1],fourthParse[2]),
+								new SimpleMarkerSymbol(SimpleMarkerSymbol.STYLE_SQUARE, 15, 0xEB0909));
+								endGraphicMarker.toolTip = "End Point";
+								//myGraphicsLayer.add(endGraphicMarker);
+							}
 						}
 						else{
 							ra.push(new WebMercatorMapPoint(fourthParse[0],fourthParse[1]));
+							var startGraphicMarker:Graphic = new Graphic(new WebMercatorMapPoint(fourthParse[0],fourthParse[1]),
+								new SimpleMarkerSymbol(SimpleMarkerSymbol.STYLE_DIAMOND, 18, 0x0EC41A));
+								startGraphicMarker.toolTip = "Start Point";
+							//myGraphicsLayer.add(startGraphicMarker);
 						}
 					} 
 					var geoLine:Polyline = new Polyline;
 					
 					geoLine.addPath(ra);
 					var graGraphic:Graphic = new Graphic(geoLine, lineSymbol);
+					graGraphic.toolTip = "Trackline";
 					var graphLayer:GraphicsLayer = new GraphicsLayer;
 					map.extent = geoLine.extent;
 					graphLayer.id = "bound";
+					graphLayer.add(startGraphicMarker);
+					graphLayer.add(endGraphicMarker);
 					graphLayer.add(graGraphic);
 					map.addLayer(graphLayer); 
 				}
 				else{
 				}
 			}
-			
+			private function createCustomTip(title:String, event:ToolTipEvent):void {
+				//No Eye Fucking eyedea why the fucking thing won't work
+				var ptt:ToolTipSkin = new ToolTipSkin();
+				ptt.text = title;
+				event.toolTip = ptt;
+			}
 		]]>
 	</fx:Script>
 	
 	<fx:Declarations>
 		<esri:SimpleLineSymbol id="lineSymbol"
-							   width="2"
-							   color="#666633" style="solid"/>
+							   width="3"
+							   color="#6E6E6E" style="solid"/>
 	</fx:Declarations>
-	<mx:VBox width="100%" height="100%" paddingTop="10" horizontalAlign="center">
+	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
 		<s:Label text="Your Particle Models" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
 		<mx:HRule width="100%"/>
 			<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
@@ -150,7 +170,7 @@
 					<mx:DataGridColumn dataField="_id" minWidth="130"/>
 					<!--<mx:DataGridColumn dataField="name" width="80"/>-->
 					<mx:DataGridColumn dataField="created" minWidth="130"/>
-					<mx:DataGridColumn dataField="status" textAlign="center" fontWeight="bold" itemRenderer="com.windows.statusRenderer" headerText="Progress"/>
+					<mx:DataGridColumn dataField="status" textAlign="center" fontWeight="bold" itemRenderer="com.windows.statusRenderer" headerText="Progress/Status"/>
 					<mx:DataGridColumn>
 						<mx:itemRenderer>
 							<fx:Component>
@@ -161,14 +181,14 @@
 					<mx:DataGridColumn>
 						<mx:itemRenderer>
 							<fx:Component>
-								<mx:Button fontWeight="bold" click="outerDocument.downloadUrl(data.output,'netcdf')" enabled="{data.status =='SUCCESS'}" label="Download SHP" />
+								<mx:Button fontWeight="bold" click="outerDocument.downloadUrl(data.output,'netcdf')" enabled="{data.status =='SUCCESS'}" label="Download NetCDF" />
 							</fx:Component>
 						</mx:itemRenderer>
 					</mx:DataGridColumn>
 					<mx:DataGridColumn>
 						<mx:itemRenderer>
 							<fx:Component>
-								<mx:Button fontWeight="bold" click="outerDocument.downloadUrl(data.output,'shp')" enabled="{data.status =='SUCCESS'}" label="Download NetCDF" />
+								<mx:Button fontWeight="bold" click="outerDocument.downloadUrl(data.output,'shp')" enabled="{data.status =='SUCCESS'}" label="Download SHP" />
 							</fx:Component>
 						</mx:itemRenderer>
 					</mx:DataGridColumn>

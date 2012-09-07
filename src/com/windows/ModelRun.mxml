@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF" 
 		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:esri="http://www.esri.com/2008/ags" xmlns:classes="com.classes.*" xmlns:symbols="com.esri.ags.symbols.*" >
 	<fx:Script>
 		<![CDATA[
 			import com.classes.AppEvent;
+			import com.classes.tooltips;
 			import com.esri.ags.Graphic;
 			import com.esri.ags.SpatialReference;
 			import com.esri.ags.events.DrawEvent;
 			import com.esri.ags.geometry.Extent;
-			import com.esri.ags.geometry.Geometry;
 			import com.esri.ags.geometry.MapPoint;
-			import com.esri.ags.geometry.WebMercatorMapPoint;
 			import com.esri.ags.layers.ArcGISTiledMapServiceLayer;
 			import com.esri.ags.layers.GraphicsLayer;
 			import com.esri.ags.tools.DrawTool;
 			import com.esri.ags.utils.JSONUtil;
 			import com.esri.ags.utils.WebMercatorUtil;
+			import com.skins.ToolTipSkin;
 			
 			import mx.controls.Alert;
-			import mx.effects.effectClasses.ZoomInstance;
-			import mx.events.StateChangeEvent;
-			import mx.events.ValidationResultEvent;
+			import mx.events.ToolTipEvent;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.http.HTTPService;
@@ -40,11 +38,11 @@
 			public var urlStr:String = new String;
 			[Bindable]
 			public var backgroundMapU:String = "";
-			private var spatRef:SpatialReference = new SpatialReference(4326);
-			private var spatRefWM:SpatialReference = new SpatialReference(102100);
 			[Bindable]
 			public var forcingDomain:GraphicsLayer = new GraphicsLayer;
-			//private var mapExtent:Extent = new Extent(-11294052,-4175045,5221238,6822104,spatRefWM);
+			
+			private var spatRef:SpatialReference = new SpatialReference(4326);
+			private var spatRefWM:SpatialReference = new SpatialReference(102100);
 			
 			[Bindable]private var gr:Graphic = new Graphic;
 			
@@ -59,7 +57,7 @@
 				dt.activate(DrawTool.MAPPOINT);
 				AppEvent.addListener(AppEvent.EXIT_APP, exitApp);
 				var tempDate:Date = new Date();
-				defaultDate = new Date(tempDate.getFullYear(),tempDate.getMonth(),tempDate.getDate()-2);
+				defaultDate = new Date(tempDate.getFullYear(),tempDate.getMonth(),tempDate.getDate()-5);
 			}
 			private function pointDrop(event:DrawEvent):void
 			{
@@ -129,6 +127,13 @@
 					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
 				}
 			}
+			
+			private function createCustomTip(title:String, event:ToolTipEvent):void {
+				//No Eye Fucking eyedea why the fucking thing won't work
+				var ptt:ToolTipSkin = new ToolTipSkin();
+				ptt.text = title;
+				event.toolTip = ptt;
+			}
 		]]>
 	</fx:Script>
 	
@@ -136,21 +141,21 @@
 		<symbols:PictureMarkerSymbol id="pt" source="@Embed('assets/images/SpillSite_glow.png')"/>
 		<esri:DrawTool id="dt" map="{map}" drawEnd="pointDrop(event)" />
 	</fx:Declarations>
-	<mx:VBox width="100%" height="100%" paddingTop="10" horizontalAlign="center">
+	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
 		<s:Label text="Run Model" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
 		<mx:HRule width="100%"/>
 			<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
 				<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
 					<mx:Label fontWeight="bold"  fontSize="13" text="Start Date:" />
-					<mx:DateField id="starDate" selectedDate="{defaultDate}"/>
+					<mx:DateField id="starDate" selectedDate="{defaultDate}" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelDate}"/>
 					<mx:Label fontWeight="bold" fontSize="13" text="Duration:" />
-					<mx:NumericStepper fontWeight="bold" id="dur" minimum="1" maximum="100" />
+					<mx:NumericStepper fontWeight="bold" id="dur" minimum="1" maximum="100" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.duration}"/>
 					<s:Label text="days" color="white" fontWeight="bold" fontSize="12"/>
 					<!--<mx:ComboBox selectionColor="#CAE8E8" paddingLeft="0" id="durUnits" dataProvider="['days','months']" />-->
 					<mx:Label fontWeight="bold" fontSize="13" text="Time Step:" />
-					<mx:NumericStepper fontWeight="bold" id="timeSte" value="60" maximum="1000" minimum="10"/>
+					<mx:NumericStepper fontWeight="bold" toolTip="{tooltips.modelStepper}" toolTipCreate="createCustomTip('', event)" id="timeSte" value="60" maximum="1000" minimum="10"/>
 					<s:Label text="minutes" color="white" fontWeight="bold" fontSize="12"/>
-					<mx:ComboBox selectionColor="#CAE8E8" id="methodT" >
+					<mx:ComboBox selectionColor="#CAE8E8" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.interp}" id="methodT" >
 						<mx:dataProvider>
 							<mx:ArrayList>
 								<fx:Object label="Use Linear Interpolation" value="interp"/>
@@ -164,15 +169,15 @@
 		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
 			<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
 				<mx:Label fontWeight="bold" fontSize="13" text="Particles:" />
-				<mx:NumericStepper fontWeight="bold" minimum="1" maximum="1000" id="parts"  />
+				<mx:NumericStepper fontWeight="bold" minimum="1" toolTip="{tooltips.particles}" toolTipCreate="createCustomTip('', event)" maximum="1000" id="parts"  />
 				<mx:Label fontWeight="bold" fontSize="13" text="Release Depth:" />
-				<classes:NumberInput width="60" fractionalDigits="5" id="depthVal"/>
-				<s:Label text="Meters" color="white" fontWeight="bold" fontSize="12"/>
+				<classes:NumberInput width="60" text="0" fractionalDigits="5" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.depthT}" id="depthVal"/>
+				<s:Label text="Meters" color="white" fontWeight="bold" toolTip="{tooltips.depthT}" fontSize="12"/>
 				<mx:Label fontWeight="bold"  fontSize="13" text="Horizontal Dispersion:" />
-				<classes:NumberInput width="60" fractionalDigits="5" id="horiDisp"/>
+				<classes:NumberInput width="60" text="0.0" toolTip="{tooltips.hDisp}" toolTipCreate="createCustomTip('', event)" fractionalDigits="5" id="horiDisp"/>
 				<s:Label text="m/s" color="white" fontWeight="bold" fontSize="12"/>
 				<mx:Label fontWeight="bold" fontSize="13" text="Vertical Dispersion:" />
-				<classes:NumberInput width="60" fractionalDigits="5" id="vertDis"/>
+				<classes:NumberInput width="60" toolTip="{tooltips.vDisp}" text="0.0" toolTipCreate="createCustomTip('', event)" fractionalDigits="5" id="vertDis"/>
 				<s:Label text="m/s" color="white" fontWeight="bold" fontSize="12"/>
 			</mx:HBox>
 		</mx:HBox>
@@ -180,7 +185,7 @@
 		<mx:HBox verticalAlign="middle" width="85%">
 			<mx:VBox horizontalAlign="center">
 				<mx:Label paddingBottom="40" fontWeight="bold" paddingLeft="0" fontSize="14" text="Select a point on Map" toolTip="Run Model Steps" />
-				<mx:Label paddingLeft="0" fontSize="12" text="Showing"  />
+				<mx:Label paddingLeft="0" fontSize="12" fontWeight="bold" text="Showing"  />
 				<mx:Label paddingLeft="0" fontSize="12" text="Forcing domain" />
 				<mx:Label paddingLeft="0" fontSize="12" text="on map" />
 			</mx:VBox>
@@ -190,7 +195,7 @@
 		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="100%" height="35" paddingTop="3" paddingBottom="3">
 			<!--<s:Button fontWeight="bold" fontSize="14" label="Back" id="goBack" toolTip="Go Back" click="{dt.activate(DrawTool.MAPPOINT)}" />-->
 			<s:Label color="#FF3333" fontWeight="bold" id="error"/>
-			<s:Button fontWeight="bold" fontSize="14" label="Run Model" enabled="false" id="goButt" toolTip="Run Model" click="runModel()"/>
+			<s:Button fontWeight="bold" fontSize="14" label="Run Model" enabled="false" id="goButt" toolTip="Run Model" toolTipCreate="createCustomTip('', event)" click="runModel()"/>
 		</mx:HBox>
 	</mx:VBox>
 </mx:Canvas>

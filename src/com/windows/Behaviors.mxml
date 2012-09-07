@@ -1,7 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF" 
 		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		@namespace cl "com.classes.*";
+		@namespace esri "http://www.esri.com/2008/ags";
+		
+		.myToolTip {
+			backgroundAlpha: .8;
+			cornerRadius: 5;
+			fontSize:14;
+			color:white;
+			backgroundColor:black;
+			borderStyle:none;
+		}
+	</fx:Style>
 <fx:Script>
 	<![CDATA[
 		import com.classes.*;
@@ -9,19 +24,16 @@
 		import com.esri.ags.SpatialReference;
 		import com.esri.ags.geometry.Extent;
 		import com.esri.ags.geometry.Polygon;
-		import com.esri.ags.geometry.WebMercatorExtent;
 		import com.esri.ags.geometry.WebMercatorMapPoint;
 		import com.esri.ags.layers.ArcGISTiledMapServiceLayer;
 		import com.esri.ags.layers.GraphicsLayer;
-		import com.esri.ags.utils.GeometryUtil;
 		import com.esri.ags.utils.JSONUtil;
+		import com.skins.ToolTipSkin;
 		
 		import mx.collections.ArrayCollection;
 		import mx.controls.Alert;
-		import mx.events.ItemClickEvent;
 		import mx.events.ListEvent;
-		import mx.events.StateChangeEvent;
-		import mx.events.ValidationResultEvent;
+		import mx.events.ToolTipEvent;
 		import mx.rpc.events.FaultEvent;
 		import mx.rpc.events.ResultEvent;
 		import mx.rpc.http.HTTPService;
@@ -67,10 +79,12 @@
 			
 			var emailservrequest:HTTPService = new HTTPService();
 			emailservrequest.addEventListener(ResultEvent.RESULT, emailservice);
+			var uniqueObj:Object = new Object;
+			uniqueObj['x'] = new Date().time;
 			emailservrequest.url = emailUrlStr;
 			emailservrequest.resultFormat = "object";
 			emailservrequest.addEventListener(FaultEvent.FAULT, loadError);
-			emailservrequest.send();	
+			emailservrequest.send(uniqueObj);	
 			function emailservice(event:ResultEvent): void
 			{
 				var jsResult:Object = JSONUtil.decode(event.result.toString());
@@ -167,7 +181,7 @@
 			{			
 				if(upload == false)
 				{
-					//This is to stop two events from occuring;
+					//This is to stop two events from occuring; 
 					upload = true;
 					loadedFileData = JSONUtil.decode(loadFile.data.toString());
 					//check to see if the file is empty
@@ -197,8 +211,8 @@
 			{
 				var obj:Array = event.data.split(" \"");
 				var obj2:Array = String(obj[2]).split("\"\n");
-				behSelectedID = obj2[0]//String(obj2[0]).split("\"")[1];
-				Alert.show(behSelectedID);
+				behSelectedID = obj2[0];//String(obj2[0]).split("\"")[1];
+				//Alert.show(behSelectedID);
 				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
 			}
 			function loadIoErrorHandler(event:Event):void
@@ -260,6 +274,14 @@
 			goButt.setStyle("fontSize",13);
 			zoomLocationExtent(event.itemRenderer.data);
 			behSelectedID = event.itemRenderer.data._id;
+			this.parentApplication.beh = event.itemRenderer.data._id;
+		}
+		
+		private function createCustomTip(title:String, event:ToolTipEvent):void {
+			//No Eye Fucking eyedea why the fucking thing won't work
+			var ptt:ToolTipSkin = new ToolTipSkin();
+			ptt.text = title;
+			event.toolTip = ptt;
 		}
 	]]>
 </fx:Script>
@@ -267,16 +289,18 @@
 		<esri:SimpleLineSymbol id="lineSymbol" color="0x555555" width="2" alpha="1" style="solid"/>
 		<esri:SimpleFillSymbol id="polygonSymbol" color="0x999999" alpha=".5" style="solid" outline="{lineSymbol}"/>
 	</fx:Declarations>
-	<mx:VBox width="100%" height="100%" paddingTop="10" horizontalAlign="center">
+	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
 		<s:Label text="Available Behaviors" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
 		<mx:HRule width="100%"/>
 			<mx:HBox verticalAlign="middle" horizontalAlign="left" width="85%" paddingTop="3" paddingBottom="3">
-				<mx:Label fontWeight="bold" paddingLeft="0" fontSize="16" text="Select One Behavior " toolTip="Choose One Behavior" />
+				<mx:HBox verticalAlign="middle" cornerRadius="5" backgroundColor="0x4A4A4A">
+					<mx:Label fontWeight="bold" paddingLeft="3" paddingRight="3" fontSize="16" color="0xEFF3FF" text="Choose One Behavior" toolTipCreate="createCustomTip('', event)" toolTip="Choose One Behavior" />
+				</mx:HBox>
 				<mx:Label fontSize="13" fontWeight="bold" color="red" id="noLoc" paddingLeft="230"  text="No Location Set" visible="false" />
 				<mx:Label fontSize="13" text="Search Behaviors:" toolTip="Search Behaviors:" />
 				<mx:TextInput id="listSearchText" width="150"/>
-				<s:Button label="Search" toolTip="Search using keyword" click="search()"/>
-				<mx:CheckBox id="owned" label="Search Public Behaviors" selected="true" toolTip="Uncheck to only search your private Behaviors" />
+				<s:Button label="Search" toolTip="Search using keyword" toolTipCreate="createCustomTip('', event)" click="search()"/>
+				<mx:CheckBox id="owned" label="Search Public Behaviors" selected="true" toolTipCreate="createCustomTip('', event)" toolTip="Uncheck to only search your private Behaviors" />
 			</mx:HBox>
 		<mx:HRule width="100%"/>
 		<mx:DataGrid selectionColor="0xCCCCCC" id="bDG" itemClick="{dgClickHandler(event)}" dataProvider="{behaviorsList}" width="85%" rowCount="4">
@@ -293,12 +317,12 @@
 			</mx:columns>
 		</mx:DataGrid>
 		<mx:HBox verticalAlign="middle" paddingTop="4">
-			<s:Label id="loadedFileName" fontWeight="bold" fontSize="13" toolTip="Your File" click="onUpload()"/>
-			<s:Button label="Upload New Behavior File" toolTip="Upload Behavior File" click="onUpload()"/>
-			<s:Button label="Create New Behavior" toolTip="Navigate to Behavior Page" click="navigateToURL(new URLRequest('http://larva-library.herokuapp.com/'), 'AGOL')"/>
-			<s:Button label="Refresh List" toolTip="Refresh values if Behaviors have been changed" click="refreshValues()"/>
-			<s:Button label="Next" id="goButt" toolTip="Go to Run Model Page" click="nextTab()"/>
-			<s:CheckBox label="Edit Behavior" id="editFirst" selected="false" toolTip="Check to Edit configuration" />
+			<s:Label id="loadedFileName" fontWeight="bold" fontSize="13" toolTipCreate="createCustomTip('', event)" toolTip="Your File" click="onUpload()"/>
+			<s:Button label="Upload New Behavior File" toolTipCreate="createCustomTip('', event)" toolTip="Upload Behavior File" click="onUpload()"/>
+			<s:Button label="Create New Behavior" toolTipCreate="createCustomTip('', event)" toolTip="Navigate to Behavior Page" click="navigateToURL(new URLRequest('http://larva-library.herokuapp.com/'), 'AGOL')"/>
+			<s:Button label="Refresh List" toolTipCreate="createCustomTip('', event)" toolTip="Refresh values if Behaviors have been changed" click="refreshValues()"/>
+			<s:Button label="Next" id="goButt" toolTipCreate="createCustomTip('', event)" toolTip="Go to Run Model Page" click="nextTab()"/>
+			<s:CheckBox label="Edit Behavior" toolTipCreate="createCustomTip('', event)" id="editFirst" selected="false" toolTip="Check to Edit configuration" />
 		</mx:HBox>
 		<esri:Map id="map" wrapAround180="true" width="85%" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" height="280" />
 	</mx:VBox>

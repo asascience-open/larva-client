@@ -1,22 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()" horizontalScrollPolicy="off"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC"
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF" 
 		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
 <fx:Script>
 	<![CDATA[
 		import com.classes.*;
-		import com.esri.ags.utils.JSONUtil;
-		
-		import mx.collections.ArrayCollection;
-		import mx.controls.Alert;
-		import mx.rpc.http.HTTPService;
 
 		[Bindable]
 		public var stageL:Object = new Object;
 		
 		
-		private function init():void
+		private function saveEvent(event:AppEvent):void
 		{
+			refreshValues();
+		}
+		
+		private function init():void
+		{			
+			AppEvent.addListener(AppEvent.SAVE_DATA_BEHAVE, saveEvent);
+			
 			durT.value = stageL.duration;
 			
 			linAT.text = formatNumStr(stageL.linear_a);
@@ -27,7 +29,13 @@
 				lowSettle.text = formatNumStr(stageL.settlement.lower);
 				upSettle.text = formatNumStr(stageL.settlement.upper);
 			}
-			if(stageL.capability != "null")
+			else{
+				lowSettle.visible = false;
+				upSettle.visible = false;
+				lowText.visible = false;
+				upText.visible = false;
+			}
+			if(stageL.capability != null)
 			{
 				vssT.text = formatNumStr(stageL.capability.vss);
 				varT.text = formatNumStr(stageL.capability.variance);
@@ -54,9 +62,11 @@
 				for(var l:int=0; l <arrayDiel[0].length; l++)
 				{
 					var dielWind:DielWindow = new DielWindow;
-					dielWind.minD = arrayDiel[0][l].min;
-					dielWind.maxD = arrayDiel[0][l].max;
+					dielWind.minD = Number(arrayDiel[0][l].min);
+					dielWind.maxD = Number(arrayDiel[0][l].max);
 					dielWind.label = "Diel "+(l+1);
+					dielWind.typeD = arrayDiel[0][l].type;
+					dielWind.cycleD = arrayDiel[0][l].cycle;
 					if(arrayDiel[0][l].type == "cycles")
 					{
 						if(arrayDiel[0][l].plus_or_minus == "+"){
@@ -87,9 +97,9 @@
 				for(var t:int=0; t <arrayTax[0].length; t++)
 				{
 					var taxWind:TaxWindow = new TaxWindow;
-					taxWind.gradientT = arrayTax[0][t].gradient;
-					taxWind.minT = arrayTax[0][t].min;
-					taxWind.maxT = arrayTax[0][t].max;
+					taxWind.gradientT = Number(arrayTax[0][t].gradient);
+					taxWind.minT = Number(arrayTax[0][t].min);
+					taxWind.maxT = Number(arrayTax[0][t].max);
 					taxWind.label = "Taxis "+(t+1);
 					if(arrayTax[0][t].variable == "sea_water_salinity"){
 						taxWind.selectedIndexSeaW = 0;
@@ -109,25 +119,115 @@
 				return str;
 			}
 		}
-		private function refreshValues():void
+		
+		private function formatNumStrBack(str:Number):*{
+			if(str){
+				return Number(str.toPrecision(6));
+			}
+			else{				
+				var obj:Object
+				return obj;
+			}
+		}
+		public function refreshValues():void
 		{
+			stageL.duration = durT.value;
 			
+			stageL.linear_a = formatNumStrBack(Number(linAT.text));
+			stageL.linear_b = formatNumStrBack(Number(linBT.text));
+			
+			if(stageL.settlement != null)
+			{
+				stageL.settlement.lower = formatNumStrBack(Number(lowSettle.text));
+				stageL.settlement.upper = formatNumStrBack(Number(upSettle.text));
+				stageL.settlement.type = stageL.settlement.type;
+			}
+			else{
+				stageL.settlement = null;
+			}
+			
+			if(stageL.capability != null){
+				stageL.capability.vss = formatNumStrBack(Number(vssT.text));
+				stageL.capability.variance= formatNumStrBack(Number(varT.text));
+				
+				stageL.capability.nonswim_turning = noswimT.selectedItem.value;
+				stageL.capability.swim_turning = swimT.selectedItem.value;
+			}	
+			else{
+				stageL.capability == null;
+			}
+			
+			//Taxis
+			var taxisArray:Array = [];
+			for(var t:int=0; t<taxisWindow.numChildren; t++)
+			{
+				var taxWind:TaxWindow = taxisWindow.getChildAt(t) as TaxWindow;
+				var taxisObj:Object = new Object;
+				taxisObj.gradient = formatNumStrBack(taxWind.gradientT);
+				taxisObj.min = formatNumStrBack(taxWind.minT);
+				taxisObj.max = formatNumStrBack(taxWind.maxT);
+				if(taxWind.selectedIndexSeaW== 0){
+					taxisObj.variable = "sea_water_salinity";
+					taxisObj.units ="PSU";
+				}
+				else{
+					taxisObj.variable = "sea_water_temperature";
+					taxisObj.units ="\u00b0C";
+				}
+				taxisArray.push(taxisObj);
+			}
+			stageL.taxis = taxisArray;
+			
+			var dielArray:Array = [];
+			for(var d:int=0; d<dielWindow.numChildren; d++)
+			{
+				var dielWind:DielWindow = dielWindow.getChildAt(d) as DielWindow;
+				var dielObj:Object = new Object;
+				dielObj.min = dielWind.minD;
+				dielObj.max = dielWind.maxD;
+				dielObj.cycle = dielWind.cycleD;
+				if(dielWind.typeD == "cycles"){
+					dielObj.type="cycles";
+					dielObj.hours=dielWind.sunHour;
+					dielObj.time =null;
+					if(dielWind.selectedIndexPlus == 0){
+						dielObj.plus_or_minus="+";
+					}
+					else{
+						dielObj.plus_or_minus="-";
+					}
+					if(dielWind.selectedSun == 0){
+						dielObj.cycle ="sunset";
+					}
+					else{
+						dielObj.cycle ="sunrise";
+					}
+				}
+				else{
+					dielObj.type="specifictime";
+					dielObj.hours=null;
+					dielObj.time=dielWind.specificDate.time;
+					dielObj.plus_or_minus=null;	
+				}
+				dielArray.push(dielObj);
+			}
+			stageL.diel = dielArray;
 		}
 	]]>
 </fx:Script>
 	<mx:VBox width="100%" paddingTop="8" horizontalAlign="center">
 		<mx:HBox width="90%" verticalAlign="middle" horizontalAlign="left">
 			<s:Label fontWeight="bold" fontSize="14" width="70" text="Duration:"/>
-			<s:NumericStepper id="durT"/>
+			<s:NumericStepper id="durT" change="refreshValues()"/>
 			<s:Label fontWeight="bold" fontSize="13" width="58"  text="days"/>
 			<s:Label fontWeight="bold" fontSize="14" width="70"  text="Linear A:"/>
-			<cl:NumberInput fractionalDigits="5" width="70" id="linAT"/>
+			<cl:NumberInput fractionalDigits="5" width="70" change="refreshValues()" id="linAT"/>
 			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="70" text="Linear B:"/>
-			<cl:NumberInput fractionalDigits="5" width="70" id="linBT"/>
-			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="130" text="Upper Settlement:"/>
-			<cl:NumberInput fractionalDigits="5"  width="70" id="upSettle"/>
-			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="130" text="Lower Settlement:"/>
-			<cl:NumberInput fractionalDigits="5" width="70" id="lowSettle"/>
+			<cl:NumberInput fractionalDigits="5" change="refreshValues()" width="70" id="linBT"/>
+			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="130" id="upText" text="Upper Settlement:"/>
+			<cl:NumberInput fractionalDigits="5" change="refreshValues()" width="70" id="upSettle"/>
+			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="130" id="lowText" text="Lower Settlement:"/>
+			<cl:NumberInput fractionalDigits="5" change="refreshValues()" width="70" id="lowSettle"/>
 		</mx:HBox>
 		<mx:HRule width="100%"/>
 		<s:Label fontWeight="bold" text="Capability" fontSize="16"/>
@@ -135,7 +235,7 @@
 		<!--Capability-->
 		<mx:HBox width="800" paddingTop="5" verticalAlign="middle" horizontalAlign="left">
 			<s:Label fontWeight="bold" fontSize="14" width="220"  text="Swim Turning:"/>
-			<mx:ComboBox selectionColor="#CAE8E8" id="swimT" width="285">
+			<mx:ComboBox selectionColor="#CAE8E8" id="swimT" change="refreshValues()" width="285">
 				<mx:dataProvider>
 					<mx:ArrayList>
 						<fx:Object label="Reverses swimming direction" value="reverse"/>
@@ -144,11 +244,11 @@
 				</mx:dataProvider>
 			</mx:ComboBox>
 			<s:Label fontWeight="bold" paddingLeft="20" fontSize="14" width="100"  text="VSS:"/>
-			<cl:NumberInput fractionalDigits="5" id="vssT" width="80"/>
+			<cl:NumberInput fractionalDigits="5" id="vssT" change="refreshValues()" width="80"/>
 		</mx:HBox>
 		<mx:HBox paddingTop="5" paddingBottom="5" width="800" verticalAlign="middle" horizontalAlign="left">
 			<s:Label fontWeight="bold" fontSize="14" width="220"  text="Non-Swim Turning:"/>
-			<mx:ComboBox selectionColor="#CAE8E8" id="noswimT" width="285">
+			<mx:ComboBox selectionColor="#CAE8E8" change="refreshValues()" id="noswimT" width="285">
 				<mx:dataProvider>
 					<mx:ArrayList>
 						<fx:Object label="Always swim downward" value="downward"/>
@@ -158,7 +258,7 @@
 				</mx:dataProvider>
 			</mx:ComboBox>
 			<s:Label fontWeight="bold" paddingLeft="20" fontSize="14" width="100"  text="Variance:"/>
-			<cl:NumberInput fractionalDigits="5" id="varT" width="80"/>
+			<cl:NumberInput fractionalDigits="5" change="refreshValues()" id="varT" width="80"/>
 		</mx:HBox>
 		<!--Diel-->
 		<mx:HRule width="100%" />

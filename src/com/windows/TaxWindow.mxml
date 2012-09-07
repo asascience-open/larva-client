@@ -4,19 +4,27 @@
 		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
 	<fx:Script>
 		<![CDATA[
+			import com.classes.*;
+			
+			
 			[Bindable]
 			public var selectedIndexSeaW:int = 0;
 			[Bindable]
-			public var minT:String = "";
+			public var minT:Number = 0;
 			[Bindable]
-			public var maxT:String = "";
+			public var maxT:Number = 0;
 			[Bindable]
-			public var gradientT:String = "";
+			public var gradientT:Number = 0;
 			
 			
 			private function init():void
 			{
-				
+				minT=Number(minStep.text);
+				maxT=Number(maxStep.text);
+				gradientT=Number(grad.text);
+				selectedIndexSeaW = riseSet.selectedIndex;
+				var obj:String = "";
+				AppEvent.dispatch(AppEvent.SAVE_DATA_BEHAVE,obj);
 			}
 		]]>
 	</fx:Script>
@@ -24,15 +32,15 @@
 		<mx:Label text="{this.label}" fontSize="14" textDecoration="underline"/>
 		<mx:HBox verticalAlign="middle">
 			<s:Label text="Minimum: "/>
-			<cl:NumberInput fractionalDigits="5" text="{minT}" width="50" id="maxStep" paddingLeft="5"/>
+			<cl:NumberInput change="init();" fractionalDigits="5" text="{minT}" width="50" id="minStep" paddingLeft="5"/>
 			<s:Label text="Maximum: " paddingLeft="5"/>
-			<cl:NumberInput fractionalDigits="5" text="{maxT}" width="50" id="minStep" paddingLeft="10"/>
+			<cl:NumberInput change="init();" fractionalDigits="5" text="{maxT}" width="50" id="maxStep" paddingLeft="10"/>
 			<s:Label text="Gradient: " paddingLeft="5"/>
-			<cl:NumberInput fractionalDigits="5" text="{gradientT}" width="50" id="grad" paddingLeft="10"/>
+			<cl:NumberInput change="init();" fractionalDigits="5" text="{gradientT}" width="50" id="grad" paddingLeft="10"/>
 		</mx:HBox>
 		<mx:HBox verticalAlign="middle">
 			<s:Label text="Variable: "/>
-			<mx:ComboBox selectionColor="#CAE8E8" selectedIndex="{selectedIndexSeaW}" id="riseSet">
+			<mx:ComboBox selectionColor="#CAE8E8" change="init();" selectedIndex="{selectedIndexSeaW}" id="riseSet">
 				<mx:dataProvider>
 					<mx:ArrayList>
 						<fx:Object label="Sea Water Salinity" value="sea_water_salinity" units="PSU"/>

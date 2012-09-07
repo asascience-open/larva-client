@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas xmlns:mx="http://www.adobe.com/2006/mxml"
+	implements="mx.core.IToolTip" cornerRadius="6"
+	backgroundColor="0x4A4A4A">
+	<mx:Script>
+		<![CDATA[
+			[Bindable]
+			private var _text:String;
+ 
+			public function get text():String{
+				return _text;
+			}
+ 
+			public function set text( value:String ):void{
+				_text = value;
+			}
+ 
+		]]>
+	</mx:Script>
+	<mx:Text text="{_text}" fontSize="14" 
+		paddingBottom="5" paddingLeft="5" paddingRight="4" paddingTop="4"
+		color="white"/>
+</mx:Canvas>

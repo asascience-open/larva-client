@@ -4,14 +4,17 @@
 		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
 <fx:Script>
 	<![CDATA[
+		import com.classes.*;
+		
+		
 		[Bindable]
 		public var selectedIndex:int = 0;
 		[Bindable]
 		public var selectedIndexPlus:int = 0;
 		[Bindable]
-		public var minD:String = "";
+		public var minD:Number = 0;
 		[Bindable]
-		public var maxD:String = "";
+		public var maxD:Number = 0;
 		[Bindable]
 		public var selectedSun:int = 0;
 		[Bindable]
@@ -19,10 +22,20 @@
 		[Bindable]
 		public var specificDate:Date = new Date;
 		
+		public var typeD:String = "";
+		public var cycleD:String = "";
+		
 				
 		private function init():void
 		{
-			
+			minD = Number(minStep.text);
+			maxD = Number(maxStep.text);
+			specificDate.time = datePick.selectedDate.time
+			specificDate.hours = hoursPickspecific.value;
+			selectedIndexPlus = plusMin.selectedIndex;
+			selectedSun = riseSet.selectedIndex;
+			var obj:String = "";			
+			AppEvent.dispatch(AppEvent.SAVE_DATA_BEHAVE,obj);
 		}
 	]]>
 </fx:Script>
@@ -30,27 +43,27 @@
 		<mx:Label text="{this.label}" fontSize="14" textDecoration="underline"/>
 		<mx:HBox verticalAlign="middle">
 			<s:Label text="Minimum: "/>
-			<cl:NumberInput fractionalDigits="5" text="{minD}" width="70" id="maxStep" paddingLeft="5"/>
+			<cl:NumberInput fractionalDigits="5" text="{minD}" change="init();" width="70" id="minStep" paddingLeft="5"/>
 			<s:Label text="Maximum: " paddingLeft="5"/>
-			<cl:NumberInput fractionalDigits="5" text="{maxD}" width="70" id="minStep" paddingLeft="10"/>
+			<cl:NumberInput fractionalDigits="5" text="{maxD}" change="init();" width="70" id="maxStep" paddingLeft="10"/>
 		</mx:HBox>
 		<mx:ViewStack id="myViewStack" selectedIndex="{selectedIndex}" width="100%" height="100%">
 			<s:NavigatorContent width="100%" height="100%">
 				<mx:HBox verticalAlign="middle">
 					<s:Label text="Plus or Minus: "/>
-					<mx:ComboBox selectionColor="#CAE8E8" selectedIndex="{selectedIndexPlus}" id="plusMin" dataProvider="['+','-']"/>
+					<mx:ComboBox selectionColor="#CAE8E8" change="init();" selectedIndex="{selectedIndexPlus}" id="plusMin" dataProvider="['+','-']"/>
 					<s:Label text="Hours: "/>
-					<mx:NumericStepper id="hoursPick" value="{sunHour}" maximum="12" minimum="1"/>
+					<mx:NumericStepper id="hoursPick" change="init();" value="{sunHour}" maximum="12" minimum="1"/>
 					<s:Label text="From: "/>
-					<mx:ComboBox selectionColor="#CAE8E8" selectedIndex="{selectedIndexPlus}" id="riseSet" dataProvider="['sunset','sunrise']"/>
+					<mx:ComboBox selectionColor="#CAE8E8" change="init();" selectedIndex="{selectedSun}" id="riseSet" dataProvider="['sunset','sunrise']"/>
 				</mx:HBox>
 			</s:NavigatorContent>
 			<s:NavigatorContent width="100%" height="100%">
 				<mx:HBox verticalAlign="middle">
 					<s:Label text="Date: " width="55"/>
-					<mx:DateField id="datePick" selectedDate="{specificDate}"/>
+					<mx:DateField id="datePick" change="init();" selectedDate="{specificDate}"/>
 					<s:Label text="Hours: " paddingLeft="10"/>
-					<mx:NumericStepper id="hoursPickspecific" value="{specificDate.hours+1}" maximum="24" minimum="1"/>
+					<mx:NumericStepper id="hoursPickspecific" change="init();" value="{specificDate.hours}"  maximum="23" minimum="0"/>
 				</mx:HBox>
 			</s:NavigatorContent>
 		</mx:ViewStack>

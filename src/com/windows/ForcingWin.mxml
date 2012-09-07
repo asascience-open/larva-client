@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF" 
 		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:esri="http://www.esri.com/2008/ags" >
 	<fx:Script>
 		<![CDATA[
 			import com.classes.*;
-			import com.classes.AppEvent;
 			import com.esri.ags.Graphic;
 			import com.esri.ags.SpatialReference;
 			import com.esri.ags.geometry.Extent;
@@ -14,11 +13,11 @@
 			import com.esri.ags.layers.ArcGISTiledMapServiceLayer;
 			import com.esri.ags.layers.GraphicsLayer;
 			import com.esri.ags.utils.JSONUtil;
+			import com.skins.ToolTipSkin;
 			
 			import mx.controls.Alert;
 			import mx.events.ListEvent;
-			import mx.events.StateChangeEvent;
-			import mx.events.ValidationResultEvent;
+			import mx.events.ToolTipEvent;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.http.HTTPService;
@@ -98,12 +97,15 @@
 			{
 				if(bDG.selectedIndex>-1)
 				{	
-					var object:Object = new Object();
-					object["step"] = "model";
-					object["id"] = behaviorid;
-					object["currentsURL"] = bDG.selectedItem.location;
-					object["currentsDomain"] = graphLayer;
-					AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
+					this.parentApplication.beh = behaviorid;
+					this.parentApplication.currentsUrl = bDG.selectedItem.location;
+					this.parentApplication.forcingDomainLayer = graphLayer;
+					var obj:Object = new Object;
+					obj["step"]= "model";
+					obj["id"]=behaviorid;
+					obj["currentsURL"]= bDG.selectedItem.location;
+					obj["currentsDomain"] = graphLayer;
+					AppEvent.dispatch(AppEvent.SET_APP_STATUS,obj);
 				}
 				else{
 					Alert.show("Please select dataset",'Alert');
@@ -152,10 +154,18 @@
 						graphLayer.id = "bound";
 						graphLayer.add(graGraphic);
 						map.addLayer(graphLayer); 
+						this.parentApplication.currentsUrl = bDG.selectedItem.location;
+						this.parentApplication.forcingDomainLayer = graphLayer;
 					}
 					else{
 					}
 				}
+			}
+			private function createCustomTip(title:String, event:ToolTipEvent):void {
+				//No Eye Fucking eyedea why the fucking thing won't work
+				var ptt:ToolTipSkin = new ToolTipSkin();
+				ptt.text = title;
+				event.toolTip = ptt;
 			}
 		]]>
 	</fx:Script>
@@ -164,13 +174,14 @@
 		<esri:SimpleLineSymbol id="lineSymbol" color="0x555555" width="2" alpha="1" style="solid"/>
 		<esri:SimpleFillSymbol id="polygonSymbol" color="0x999999" alpha=".5" style="solid" outline="{lineSymbol}"/>
 	</fx:Declarations>
-	<mx:VBox width="100%" height="100%" paddingTop="10" horizontalAlign="center">
-		<s:Label text="Forcing" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
-		
+	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
+		<s:Label text="Forcing" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>		
 		<mx:HRule width="100%"/>
 			<mx:VBox height="160" verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" verticalScrollPolicy="off" paddingBottom="1">
-				<mx:Label fontWeight="bold" paddingLeft="0" fontSize="16" text="Select a Currents Dataset"  />
 				
+				<mx:HBox verticalAlign="middle" cornerRadius="5" backgroundColor="0x4A4A4A">
+					<mx:Label fontWeight="bold" fontSize="16" paddingLeft="3" paddingRight="3" color="0xEFF3FF"  text="Choose a Currents Dataset"  />
+				</mx:HBox>
 				<mx:DataGrid selectionColor="0xCCCCCC" id="bDG" itemClick="{dgClickHandler(event)}" dataProvider="{forcingCurrentList}" width="85%" rowCount="4">
 					<mx:columns>
 						<mx:DataGridColumn dataField="name" minWidth="150"/>
@@ -182,15 +193,15 @@
 				</mx:DataGrid>
 			</mx:VBox>
 		<mx:HRule width="100%"/>
-			<mx:VBox height="61" verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
+			<!--<mx:VBox height="61" verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
 				<mx:Label fontWeight="bold" paddingLeft="0" fontSize="16" text="Select a Winds Dataset (disabled)"  />
 				<mx:ComboBox fontWeight="bold" paddingLeft="0" width="280" id="currentWinds" fontSize="16" enabled="false" toolTip="Choose Winds - Not Available" />
 			</mx:VBox>
-		<mx:HRule width="100%"/>
+		<mx:HRule width="100%"/>-->
 		<esri:Map id="map" wrapAround180="true" width="85%" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" height="100%" />
 		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="100%" height="35" paddingTop="3" paddingBottom="3">
-			<s:Button fontWeight="bold" fontSize="14" label="Back" id="goBack" toolTip="Go Back" click="back()"/>
-			<s:Button fontWeight="bold" fontSize="14" label="Next Step" id="goButt" toolTip="Go to Model Page" click="runModel()"/>
+			<s:Button fontWeight="bold" fontSize="14" toolTipCreate="createCustomTip('', event)" label="Back" id="goBack" toolTip="Go Back" click="back()"/>
+			<s:Button fontWeight="bold" fontSize="14" toolTipCreate="createCustomTip('', event)" label="Next Step" id="goButt" toolTip="Go to Model Page" click="runModel()"/>
 		</mx:HBox>
 	</mx:VBox>
 </mx:Canvas>

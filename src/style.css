@@ -6,6 +6,14 @@ esri|Navigation
 {
 	skinClass: ClassReference("com.skins.slider");
 }
+mx|ToolTip {
+	backgroundAlpha: .9;
+	cornerRadius: 5;
+	fontSize:14;
+	color:black;
+	backgroundColor:black;
+	borderStyle:none;
+}
 mx|TabNavigator {
 	cornerRadius: 0;
 	tabStyleName: "MyTabs";

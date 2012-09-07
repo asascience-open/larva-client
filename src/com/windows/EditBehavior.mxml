@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" xmlns:cl="com.classes.*"
+		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF"   xmlns:cl="com.classes.*"
 		   xmlns:mx="library://ns.adobe.com/flex/mx" >
 	<fx:Script>
 		<![CDATA[
 			import com.classes.*;
-			import com.esri.ags.utils.JSONUtil;
+			import com.skins.ToolTipSkin;
 			
-			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
-			import mx.events.StateChangeEvent;
-			import mx.events.ValidationResultEvent;
+			import mx.events.ToolTipEvent;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.http.HTTPService;
@@ -25,7 +23,7 @@
 			private var behObj:Object = new Object;
 			[Bindable]
 			private var jsonResult:Object = new Object;
-			
+						
 			private function showPage(event:AppEvent):void{
 				if(event.data.step == "edit")
 				{
@@ -34,7 +32,7 @@
 			}
 			private function init():void
 			{
-				statusSave.text = "";
+				//statusSave.text = "";
 				tabStage.removeAllElements();
 				AppEvent.addListener(AppEvent.EXIT_APP, exitApp);
 				AppEvent.addListener(AppEvent.SET_APP_STATUS, showPage);
@@ -47,8 +45,8 @@
 				emailservrequest.send();	
 				function idservice(event:ResultEvent): void
 				{
-					jsonResult = JSONUtil.decode(event.result.toString());
-					
+					jsonResult = JSON.parse(event.result.toString());
+					var ob:Object  = jsonResult;
 					behObj = behavior.convertTimeObject(jsonResult.results);
 					loadStages(behObj);
 					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
@@ -78,39 +76,50 @@
 			
 			private function saveStages():void
 			{
-				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
-//Write out object				
-				var behaviorObject:Object = jsonResult;
+				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");		
+				var behaviorObject:Object = behavior.convertTimeObjectEPOC(jsonResult.results);
 				
-				//behaviorObject[]=
+				for(var i:int=0; i <tabStage.length; i++)
+				{
+					var lifeStage:LifeStageWindow = tabStage.getChildAt(i) as LifeStageWindow;
+					//add lifestage for each
+					behaviorObject[0].lifestages[i] = lifeStage.stageL;
+				}
 				
-				
-				
-				/* var editurlService:HTTPService = new HTTPService;
-				//var url:URLRequest = new URLRequest;
-				//url.method = "POST";
-				//url.url =urlSearchStr + "import.json?email="+emailStr;
-				editurlService.url = urlSearchStr+ "import.json?email="+emailStr;
+				var editurlService:HTTPService = new HTTPService;			
+				editurlService.url = urlSearchStr + "import.json?email=" + emailStr;
 				editurlService.method = "POST";
 				editurlService.addEventListener(ResultEvent.RESULT,runCompleteHandler);
 				editurlService.addEventListener(FaultEvent.FAULT,loadErrorHandler);
+				//Correct header
+				//Content-Disposition: form-data; name="jsonfile"; filename="new.json"
+				//Content-Type: application/octet-stream
 				
 				//convert to JSON
+				var results:Array = [];
+				results.push(behaviorObject[0]);
 				var json:Object = new Object;
-				//json["config"] = JSONUtil.encode(modelObject);
-				json["jsonfile"] = JSONUtil.encode(behaviorObject);
-				editurlService.send(json);	
+				json.results = results;
+				var finalObj:Object = new Object;
+				finalObj["config"] = JSON.stringify(json);
+				var urlRequest:URLRequest = new URLRequest;
+				
+				editurlService.send(finalObj);	
+				
 				function runCompleteHandler(event:ResultEvent):void
 				{
-					var rsult:Object = JSON.parse(event.result.toString());
 					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
-					statusSave.text = "Saved";
+					//statusSave.text = "Saved";
+					var obj:Array = event.result.toString().split(" \"");
+					var obj2:Array = String(obj[2]).split("\"\n");
+					behaviorid = obj2[0];
+					//Alert.show(behaviorid);
 				}
 				function loadErrorHandler(event:FaultEvent):void
 				{
 					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
-					statusSave.text = "Error.";
-				} */
+					//statusSave.text = "Error.";
+				}
 			}
 			
 			private function exitApp(event:AppEvent):void
@@ -123,24 +132,33 @@
 			}
 			private function back():void
 			{
+				saveStages();
 				var object:Object = new Object();
 				object["step"] = "behave";
 				AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
 			}
 			private function runModel():void
 			{
+				saveStages();
 				var object:Object = new Object();
 				object["step"] = "currents";
 				object["id"] = behaviorid;
 				AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
+			}
+			
+			private function createCustomTip(title:String, event:ToolTipEvent):void {
+				//No Eye Fucking eyedea why the fucking thing won't work
+				var ptt:ToolTipSkin = new ToolTipSkin();
+				ptt.text = title;
+				event.toolTip = ptt;
 			}
 		]]>
 	</fx:Script>
 	
 	<fx:Declarations>
 	</fx:Declarations>
-	<mx:VBox width="100%" height="100%" paddingTop="6" horizontalAlign="center">
-		<s:Label text="Edit Behavior" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>		
+	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
+		<s:Label text="Edit Behavior" fontSize="20"  paddingTop="5" fontWeight="bold"/>		
 		<mx:HRule width="100%"/>
 			<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
 				<!--<mx:Label fontWeight="bold" fontSize="15" text="Name:" />
@@ -153,14 +171,14 @@
 				<mx:Label fontWeight="bold" id="bGenus"  fontSize="14" color="#FFFFFF" />
 			</mx:HBox>
 		<mx:HRule width="100%"/>
-		<mx:HBox verticalAlign="middle" visible="true" backgroundColor="0xCCCCCC" horizontalAlign="center" width="100%" height="100%" paddingTop="0" paddingBottom="0">
-			<mx:TabNavigator resizeToContent="true" tabHeight="28" paddingTop="0" borderStyle="none" backgroundColor="0xCCCCCC" verticalGap="0" fontWeight="bold" id="tabStage" width="85%" height="100%"/>
+		<mx:HBox verticalAlign="middle" visible="true" backgroundColor="0xC6DBEF"   horizontalAlign="center" width="100%" height="100%" paddingTop="0" paddingBottom="0">
+			<mx:TabNavigator resizeToContent="true" tabHeight="28" paddingTop="0" borderStyle="none" backgroundColor="0xC6DBEF"   verticalGap="0" fontWeight="bold" id="tabStage" width="85%" height="100%"/>
 		</mx:HBox>
 		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="100%" height="36" paddingTop="2" paddingBottom="3">
-			<s:Button fontWeight="bold" fontSize="14" label="Choose Different Behavior" id="goBack" toolTip="Go Back" click="back()"/>
-			<s:Button fontWeight="bold" fontSize="14" label="Next Step" id="goButt" toolTip="Go to Forcing Page" click="runModel()"/>
-			<s:Button fontWeight="bold" fontSize="14" label="Save Edits" id="saveButt" toolTip="Save Edits" click="saveStages()"/>
-			<s:Label id="statusSave" color="#FF3333"/>
+			<s:Button fontWeight="bold" toolTipCreate="createCustomTip('', event)" fontSize="14" label="Choose Different Behavior" id="goBack" toolTip="Go Back" click="back()"/>
+			<s:Button fontWeight="bold" toolTipCreate="createCustomTip('', event)" fontSize="14" label="Next Step" id="goButt" toolTip="Go to Forcing Page" click="runModel()"/>
+			<!--<s:Button fontWeight="bold" fontSize="14" label="Save Edits" id="saveButt" toolTip="Save Edits" click="saveStages()"/>
+			<s:Label id="statusSave" fontWeight="bold" color="#FF3333"/>-->
 		</mx:HBox>
 	</mx:VBox>
 </mx:Canvas>

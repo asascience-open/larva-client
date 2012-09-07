@@ -1,6 +1,6 @@
 <config>
-	<urlEmail>http://larva-library.herokuapp.com/library.json?email=</urlEmail>
-	<urlSearch>http://larva-library.herokuapp.com/library/</urlSearch>
+	<urlEmail>http://behaviors.larvamap.asascience.com/library.json?email=</urlEmail>
+	<urlSearch>http://behaviors.larvamap.asascience.com/library/</urlSearch>
 	<backgroundURL>http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer</backgroundURL>
 	<forcing>http://services.larvamap.asascience.com/datasets.json</forcing>
 	<model>http://services.larvamap.asascience.com/run.json</model>

@@ -56,6 +56,7 @@ package com.classes
 		
 		public static const MAP_LAYER_VISIBLE:String = "mapLayerVisibleChange";
 		
+		public static const SAVE_DATA_BEHAVE:String = "behaveSave";
 		/**
 		 * This event type indicates a dynamic layer is loaded.
 		 */
