@@ -101,7 +101,7 @@
 			emailservrequest.addEventListener(ResultEvent.RESULT, searchservice);
 			
 			var ownedText:String = "";
-			//check to see to return private or public
+			//check to see whether to return private or public
 			if(owned.selected == false){
 				ownedText = "&owned=true";
 			}
@@ -134,7 +134,12 @@
 				else{
 					object["step"] = "currents";
 				}
-				object["id"] = bDG.selectedItem._id;
+				if(bDG.selectedItem._id == null){
+					object["id"] =behSelectedID;
+				}
+				else{
+					object["id"] = bDG.selectedItem._id;
+				}
 				AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
 			}
 			else{
@@ -307,8 +312,8 @@
 			<mx:columns>
 				<mx:DataGridColumn dataField="name"/>
 				<mx:DataGridColumn dataField="genus"/>
-				<mx:DataGridColumn dataField="common_name" headerText="common name"/>
 				<mx:DataGridColumn dataField="species"/>
+				<mx:DataGridColumn dataField="common_name" headerText="common name"/>
 				<mx:DataGridColumn dataField="created"/>
 				<mx:DataGridColumn dataField="notes"/>
 				<mx:DataGridColumn headerText="owner" dataField="status"/>

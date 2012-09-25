@@ -167,7 +167,7 @@
 		<mx:VDividedBox horizontalAlign="center" width="90%">
 			<mx:DataGrid dataProvider="{modelList}" id="runs" selectionColor="0xCCCCCC" width="100%" rowCount="6">
 				<mx:columns>
-					<mx:DataGridColumn dataField="_id" minWidth="130"/>
+					<mx:DataGridColumn dataField="_id" headerText="Model ID" minWidth="130"/>
 					<!--<mx:DataGridColumn dataField="name" width="80"/>-->
 					<mx:DataGridColumn dataField="created" minWidth="130"/>
 					<mx:DataGridColumn dataField="status" textAlign="center" fontWeight="bold" itemRenderer="com.windows.statusRenderer" headerText="Progress/Status"/>

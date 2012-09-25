@@ -117,7 +117,7 @@
 				function runCompleteHandler(event:ResultEvent):void
 				{
 					var rsult:Object = JSON.parse(event.result.toString());
-					Alert.show("Your Model has Started.  Check the Models page to view Status.", "Model Update");
+					Alert.show("Your Model has Started.  Check the Models page to view Status.", "Model Notify");
 					//Alert.show(rsult.results, "Model Update");
 					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
 				}
