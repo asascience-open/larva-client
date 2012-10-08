@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
-			   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xCCCCCC" pageTitle="LarvaMap"
-			   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:com="com.windows.*" xmlns:cl="com.classes.*" minWidth="955" minHeight="600">
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:com="com.windows.*" xmlns:cl="com.classes.*" 
+			   width="100%" height="100%" 
+			   pageTitle="LarvaMap" creationComplete="init()" >
+	<!-- minWidth="955" minHeight="600" -->
+	
 	<fx:Style source="style.css"/>
 	<fx:Script>
 		
@@ -9,6 +13,7 @@
 			import com.classes.*;
 			import com.esri.ags.layers.GraphicsLayer;
 			import com.esri.ags.utils.JSONUtil;
+			import com.skins.largeButtons;
 			
 			import mx.controls.Alert;
 			import mx.events.ItemClickEvent;
@@ -56,6 +61,7 @@
 				AppEvent.addListener(AppEvent.SET_APP_STATUS, sharedDataUpdated);
 				AppEvent.addListener(AppEvent.SET_APP_PROGRESS_ON, turnProgressOn);
 				AppEvent.addListener(AppEvent.SET_APP_PROGRESS_OFF, turnProgressOff);
+				
 			}
 			
 			private function turnProgressOn(event:AppEvent):void{
@@ -219,11 +225,64 @@
 				headerBar.visible = false;
 				AppEvent.dispatch(AppEvent.EXIT_APP,"");
 			}
+			
+			// Import the MyAlertPopUp class.
+			import com.skins.helpPopupContainer;
+			import mx.managers.PopUpManager;
+			
+			 /* [Bindable]
+			public static var path:String = "helptxt.xml"; */ 		
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+					//this is the size of the full popup's container background
+					var instructions:helpPopupContainer = new helpPopupContainer();
+					instructions.open(this, true);
+					instructions.width = stage.width;
+					instructions.height = stage.height;
+					
+					PopUpManager.centerPopUp(instructions);
+				}
+
+			/* TRIED TO MAKE THIS DRAGGABLE, BUT CONFLICTS WITH TEXT AREA'S SCROLL BAR
+			public var helpWin:Object;
+			
+			private function button1_clickHandler(event:MouseEvent):void
+			{
+				//this is the size of the full popup's container background
+				var instructions:helpPopupContainer = new helpPopupContainer();
+				instructions.open(this, true);
+				instructions.width = stage.width;
+				instructions.height = stage.height;
+				
+				PopUpManager.centerPopUp(instructions);
+				
+				helpWin = instructions.helpWindowPanel;
+				helpWin.addEventListener(MouseEvent.MOUSE_DOWN, dragWindowStart);
+				 helpWin.ta1.addEventListener(MouseEvent.MOUSE_DOWN, enableTextScroll);
+				helpWin.ta1.addEventListener(MouseEvent.CLICK, enableTextScroll); 				
+			}
+			private function dragWindowStart(event:MouseEvent):void {
+				helpWin.startDrag();
+				helpWin.removeEventListener(MouseEvent.MOUSE_DOWN, dragWindowStart);	
+				helpWin.addEventListener(MouseEvent.MOUSE_UP, dragWindowStop);
+			}
+			private function dragWindowStop(event:MouseEvent):void {
+				helpWin.stopDrag();
+				helpWin.removeEventListener(MouseEvent.MOUSE_UP, dragWindowStop);	
+				helpWin.addEventListener(MouseEvent.MOUSE_DOWN, dragWindowStart);
+			}
+			private function enableTextScroll(event:MouseEvent):void {
+				helpWin.stop();
+			}  */
+			
 		]]>
 	</fx:Script>
 	
 	<fx:Declarations>
 		<mx:EmailValidator id="emailValidator" valid="enterApp()" invalid="emailValidator_invalid(event);"/>
+		
+		<!-- Change text for main nav -->
 		<fx:Array id="arr">
 			<fx:Object label="Behaviors" value="behave" img="{behImg}"/>
 			<fx:Object label="Edit Behavior" value="edit" img="{editImg}"/>
@@ -232,58 +291,165 @@
 			<fx:Object label="Model List" value="status" img="{statusImg}"/>
 		</fx:Array>
 		<s:Fade id="fade" duration="3000" />
-	</fx:Declarations>
+	</fx:Declarations>	
+
+
+<s:BorderContainer width="100%" height="100%" borderWeight="0" borderColor="#ffffff" borderStyle="solid">
 	<s:layout>
-		<s:VerticalLayout/>
+		<s:VerticalLayout gap="0" verticalAlign="top"/>
 	</s:layout>
-	<mx:HBox width="100%" backgroundColor="#336699" verticalAlign="middle"
-			 height="52" fontSize="17">
-		<s:Label width="200" color="#FAF7F7" fontFamily="Verdana" fontSize="23" fontWeight="bold"
-				 paddingLeft="10" text="LarvaMap" />
-		<mx:HBox width="100%" verticalAlign="middle" horizontalAlign="center" id="headerBar" visible="false">
-			<mx:ToggleButtonBar  fontSize="14" buttonWidth="143" itemClick="toggleChange(event)" id="toggleTools" iconField="img" visible="true" selectedButtonTextStyleName="mySelectedButtonTextStyleName" dataProvider="{arr}"/>
-		</mx:HBox>
-		<mx:HBox width="310" horizontalScrollPolicy="off" id="loginPanel" verticalAlign="middle" horizontalAlign="right"  visible="false">
-			<mx:ProgressBar labelPlacement="center" label="" color="0x404040" id="loaderStat" visible="false" height="16" indeterminate="true" width="66"/>
-			<mx:Label maxWidth="199" id="login" color="#FAF7F7" fontFamily="Verdana" fontSize="12" fontWeight="bold" />			
-			<s:Label color="#C9C9C9" paddingRight="4"  buttonMode="true" useHandCursor="true" width="30" text="Exit" textDecoration="underline"  fontFamily="Verdana" fontSize="12" click="exit()" fontWeight="bold"/>
-		</mx:HBox>
-	</mx:HBox>
+
+	<!--<s:Button styleName="btn-help" buttonMode="true" click="button1_clickHandler(event)" right="40" top="20"/>-->
+
+	<!-- utility bar for logged in user -->
+	<s:BorderContainer width="100%" height="20" backgroundColor="#022739" borderWeight="0" borderColor="#022739" borderStyle="solid">
+		<s:Label id="login" styleName="loginUser"/>
+	</s:BorderContainer>
 	
-	<mx:ViewStack id="myViewStack" paddingTop="-10" width="100%" height="100%">
-		<s:NavigatorContent width="100%" height="100%">
-			<s:BorderContainer width="100%" height="100%" borderWeight="0" backgroundImage="@Embed('/assets/fish.jpg')">
-				<s:VGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle"
-						  y="-9">
-					<mx:VBox id="loginBox" backgroundColor="0xCCCCCC" showEffect="fade" cornerRadius="8" alpha=".8" visible="false" width="376" height="70" verticalAlign="middle">
-						<mx:HBox verticalAlign="middle">
-							<s:Label paddingLeft="10" text="Enter Email:" fontWeight="bold" fontSize="15" width="105"/>
-							<s:TextInput enter="checkEmail(event)" id="emailTExt" width="205"/>
-							<s:Label text="Loading.." id="statusStr" visible="false" fontSize="10"/>							
-						</mx:HBox>
-					</mx:VBox>
-					<s:Button label="Login" id="butLog"
-							  width="120" height="45"
-							  click="enterClick(event)" color="#096BFF"
-							  fontFamily="Verdana" fontSize="23" fontWeight="bold"
-							  skinClass="spark.skins.spark.ButtonSkin"/>
+		<s:BorderContainer styleName="navBand" width="100%" height="65" verticalCenter="0" horizontalCenter="0" backgroundColor="#001A69"
+					   borderWeight="0" borderColor="#001A69" borderStyle="solid" right="0" left="0">
+		
+		<s:layout><!-- content margins -->
+			<s:HorizontalLayout horizontalAlign="center" verticalAlign="middle" paddingLeft="40" paddingRight="40"/>
+		</s:layout>
+
+			<s:Label text="LarvaMap" styleName="appTitle" />
+			
+			<!-- ToggleBar paddingRight hack to make the button bar appear centered bec the title & exit btns are diff widths. -->
+			<s:HGroup id="headerBar" width="100%" verticalAlign="middle" horizontalAlign="center" visible="false">
+				<mx:ToggleButtonBar id="toggleTools" itemClick="toggleChange(event)" iconField="img" visible="true" dataProvider="{arr}" 
+									height="35" color="#333333" paddingRight="100" />
+			</s:HGroup>
+			
+			<mx:LinkButton label="EXIT" click="exit()" styleName="exitApp" />
+			<!--<s:Label text="EXIT" styleName="exitApp" buttonMode="true" useHandCursor="true" click="exit()"/>-->
+			
+		</s:BorderContainer>
+		
+		<!-- original code
+		<mx:HBox width="100%" backgroundColor="#336699" verticalAlign="middle" height="52" fontSize="17">
+		<s:Label width="200" color="#FAF7F7" fontFamily="Verdana" fontSize="23" fontWeight="bold" paddingLeft="10" text="LarvaMap" />
+		
+		<mx:HBox width="100%" verticalAlign="middle" horizontalAlign="center" id="headerBar" visible="false">
+		<mx:ToggleButtonBar fontSize="14" buttonWidth="143" itemClick="toggleChange(event)" id="toggleTools" iconField="img" visible="true" selectedButtonTextStyleName="mySelectedButtonTextStyleName" dataProvider="{arr}"/>
+		</mx:HBox>
+		
+		<mx:HBox width="310" horizontalScrollPolicy="off" id="loginPanel" verticalAlign="middle" horizontalAlign="right"  visible="false">
+		<mx:ProgressBar labelPlacement="center" label="" color="0x404040" id="loaderStat" visible="false" height="16" indeterminate="true" width="66"/>
+		
+		<mx:Label maxWidth="199" id="login" color="#FAF7F7" fontFamily="Verdana" fontSize="12" fontWeight="bold" />			
+		<s:Label color="#C9C9C9" paddingRight="4"  buttonMode="true" useHandCursor="true" width="30" text="Exit" textDecoration="underline"  fontFamily="Verdana" fontSize="12" click="exit()" fontWeight="bold"/>
+		</mx:HBox>
+		</mx:HBox>
+		-->
+	
+	
+	<mx:ViewStack id="myViewStack" width="100%" height="100%">
+		<s:NavigatorContent>
+			<s:BorderContainer width="100%" height="100%" backgroundImage="@Embed('/assets/images/iStock_anchovie_vortex_Large.jpg')"
+							   borderWeight="0" borderColor="#001A69" borderStyle="solid">
+				<s:VGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" y="-9">
+					<!-- mx:VBox id="loginBox" backgroundColor="0xCCCCCC" showEffect="fade" cornerRadius="8" alpha=".8" visible="false" width="376" height="70" verticalAlign="middle" -->
+					
+						<mx:VBox id="loginBox" backgroundColor="#ffffff" showEffect="fade" cornerRadius="8" alpha=".8" visible="false" 
+								 width="500" height="200" verticalAlign="middle" horizontalAlign="center">
+							
+							<s:HGroup verticalCenter="-20" horizontalAlign="center" verticalAlign="middle">
+							<s:Label paddingLeft="10" text="Enter Email:" fontWeight="bold" fontSize="15" width="105" />
+							<s:TextInput enter="checkEmail(event)" id="emailTExt" width="300" height="30" fontSize="18" 
+										 prompt="Please enter your email"/>
+							</s:HGroup>
+					
+							<s:VGroup id="loginPanel" verticalAlign="middle" horizontalAlign="center" visible="false" paddingTop="20">
+								<s:Label text="...LOADING..." id="statusStr" visible="false" fontSize="12" color="#021EAD" fontWeight="bold" />
+								<mx:ProgressBar id="loaderStat" visible="false" labelPlacement="center" label="" 
+												indeterminate="true" height="20" width="120" color="#021EAD" />
+							</s:VGroup>
+							
+						</mx:VBox>
+					<s:Button id="butLog" label="LOGIN" click="enterClick(event)" 
+							  width="120" height="45" styleName="btn-login" skinClass="com.skins.largeButtons"/>
 				</s:VGroup>
 			</s:BorderContainer>
 		</s:NavigatorContent>
+		
 		<s:NavigatorContent>
 			<com:Behaviors id="behWindow" backgroundMapU="{backgroundMapURL}" emailStr="{emailTExt.text}" emailUrlStr="{emailUrl+emailTExt.text}" urlSearchStr="{searchUrl}" behaviorsList="{behList}"/>
 		</s:NavigatorContent>
+		
 		<s:NavigatorContent>
 			<com:EditBehavior id="edit" behaviorid="{beh}" emailStr="{emailTExt.text}" urlSearchStr="{searchUrl}"/>		
 		</s:NavigatorContent>
+		
 		<s:NavigatorContent>
 			<com:ForcingWin id="forc" behaviorid="{beh}" forcingURL="{forcingURL}" backgroundMapU="{backgroundMapURL}"/>		
 		</s:NavigatorContent>
+		
 		<s:NavigatorContent>
 			<com:ModelRun id="modelRun" forcingDomain="{forcingDomainLayer}" behavior="{beh}" urlStr="{searchUrl}" emailStr="{emailTExt.text}" modelstr="{modelURL}" datasetCurrents="{currentsUrl}" backgroundMapU="{backgroundMapURL}"/>		
 		</s:NavigatorContent>
+		
 		<s:NavigatorContent>
 			<com:RunningModels id="models" modelrunsURL="{modelrunsURL}" backgroundMapU="{backgroundMapURL}"/>
 		</s:NavigatorContent>
+		
 	</mx:ViewStack>
+
+	<!-- ORIGINAL 
+	<mx:ViewStack id="myViewStack" width="100%" height="100%">
+	<s:NavigatorContent width="100%" height="100%">
+	<s:BorderContainer width="100%" height="100%" backgroundImage="@Embed('/assets/images/iStock_anchovie_vortex_Large.jpg')"
+	borderWeight="0" borderColor="#001A69" borderStyle="solid">
+	<s:VGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" y="-9">
+	<!/- mx:VBox id="loginBox" backgroundColor="0xCCCCCC" showEffect="fade" cornerRadius="8" alpha=".8" visible="false" width="376" height="70" verticalAlign="middle" -/>
+	
+	<mx:VBox id="loginBox" backgroundColor="#ffffff" showEffect="fade" cornerRadius="8" alpha=".8" visible="false" 
+			 width="500" height="200" verticalAlign="middle" horizontalAlign="center">
+		
+		<s:HGroup verticalCenter="-20" horizontalAlign="center" verticalAlign="middle">
+			<s:Label paddingLeft="10" text="Enter Email:" fontWeight="bold" fontSize="15" width="105"/>
+			<s:TextInput enter="checkEmail(event)" id="emailTExt" width="300" height="30" fontSize="18" 
+						 prompt="Please enter your email"/>
+		</s:HGroup>
+		
+		<s:VGroup id="loginPanel" verticalAlign="middle" horizontalAlign="center" visible="false" paddingTop="20">
+			<s:Label text="...LOADING..." id="statusStr" visible="false" fontSize="12" color="#00851F" />
+			<mx:ProgressBar id="loaderStat" visible="false" labelPlacement="center" label="" 
+							indeterminate="true" height="20" width="120" color="#00851F" />
+		</s:VGroup>
+		
+	</mx:VBox>
+	<s:Button label="Login" id="butLog"
+			  width="120" height="45"
+			  click="enterClick(event)" color="#096BFF"
+			  fontFamily="Verdana" fontSize="23" fontWeight="bold"
+			  skinClass="spark.skins.spark.ButtonSkin"/>
+				</s:VGroup>
+</s:BorderContainer>
+		</s:NavigatorContent>
+	
+	<s:NavigatorContent>
+		<com:Behaviors id="behWindow" backgroundMapU="{backgroundMapURL}" emailStr="{emailTExt.text}" emailUrlStr="{emailUrl+emailTExt.text}" urlSearchStr="{searchUrl}" behaviorsList="{behList}"/>
+	</s:NavigatorContent>
+	
+	<s:NavigatorContent>
+		<com:EditBehavior id="edit" behaviorid="{beh}" emailStr="{emailTExt.text}" urlSearchStr="{searchUrl}"/>		
+	</s:NavigatorContent>
+	
+	<s:NavigatorContent>
+		<com:ForcingWin id="forc" behaviorid="{beh}" forcingURL="{forcingURL}" backgroundMapU="{backgroundMapURL}"/>		
+	</s:NavigatorContent>
+	
+	<s:NavigatorContent>
+		<com:ModelRun id="modelRun" forcingDomain="{forcingDomainLayer}" behavior="{beh}" urlStr="{searchUrl}" emailStr="{emailTExt.text}" modelstr="{modelURL}" datasetCurrents="{currentsUrl}" backgroundMapU="{backgroundMapURL}"/>		
+	</s:NavigatorContent>
+	
+	<s:NavigatorContent>
+		<com:RunningModels id="models" modelrunsURL="{modelrunsURL}" backgroundMapU="{backgroundMapURL}"/>
+	</s:NavigatorContent>
+	
+	</mx:ViewStack>
+	
+	-->
+</s:BorderContainer>
 </s:Application>

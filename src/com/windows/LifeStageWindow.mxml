@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()" horizontalScrollPolicy="off"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF" 
-		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   xmlns:cl="com.classes.*" 
+		   xmlns:esri="http://www.esri.com/2008/ags" 
+		   width="100%" height="100%" horizontalScrollPolicy="off" backgroundColor="0xC6DBEF" 
+		   creationComplete="init()"  >
+
 <fx:Script>
 	<![CDATA[
 		import com.classes.*;
@@ -215,64 +220,227 @@
 		}
 	]]>
 </fx:Script>
-	<mx:VBox width="100%" paddingTop="8" horizontalAlign="center">
-		<mx:HBox width="90%" verticalAlign="middle" horizontalAlign="left">
-			<s:Label fontWeight="bold" fontSize="14" width="70" text="Duration:"/>
-			<s:NumericStepper id="durT" change="refreshValues()"/>
-			<s:Label fontWeight="bold" fontSize="13" width="58"  text="days"/>
-			<s:Label fontWeight="bold" fontSize="14" width="70"  text="Linear A:"/>
-			<cl:NumberInput fractionalDigits="5" width="70" change="refreshValues()" id="linAT"/>
-			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="70" text="Linear B:"/>
-			<cl:NumberInput fractionalDigits="5" change="refreshValues()" width="70" id="linBT"/>
-			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="130" id="upText" text="Upper Settlement:"/>
-			<cl:NumberInput fractionalDigits="5" change="refreshValues()" width="70" id="upSettle"/>
-			<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="130" id="lowText" text="Lower Settlement:"/>
-			<cl:NumberInput fractionalDigits="5" change="refreshValues()" width="70" id="lowSettle"/>
-		</mx:HBox>
-		<mx:HRule width="100%"/>
-		<s:Label fontWeight="bold" text="Capability" fontSize="16"/>
-		<mx:HRule width="100%"/>
-		<!--Capability-->
-		<mx:HBox width="800" paddingTop="5" verticalAlign="middle" horizontalAlign="left">
-			<s:Label fontWeight="bold" fontSize="14" width="220"  text="Swim Turning:"/>
-			<mx:ComboBox selectionColor="#CAE8E8" id="swimT" change="refreshValues()" width="285">
-				<mx:dataProvider>
-					<mx:ArrayList>
-						<fx:Object label="Reverses swimming direction" value="reverse"/>
-						<fx:Object label="Random selection of swimming direction" value="random"/>
-					</mx:ArrayList>
-				</mx:dataProvider>
-			</mx:ComboBox>
-			<s:Label fontWeight="bold" paddingLeft="20" fontSize="14" width="100"  text="VSS:"/>
-			<cl:NumberInput fractionalDigits="5" id="vssT" change="refreshValues()" width="80"/>
-		</mx:HBox>
-		<mx:HBox paddingTop="5" paddingBottom="5" width="800" verticalAlign="middle" horizontalAlign="left">
-			<s:Label fontWeight="bold" fontSize="14" width="220"  text="Non-Swim Turning:"/>
-			<mx:ComboBox selectionColor="#CAE8E8" change="refreshValues()" id="noswimT" width="285">
-				<mx:dataProvider>
-					<mx:ArrayList>
-						<fx:Object label="Always swim downward" value="downward"/>
-						<fx:Object label="Always swim upward" value="upward"/>
-						<fx:Object label="Random selection of swimming direction" value="random"/>
-					</mx:ArrayList>
-				</mx:dataProvider>
-			</mx:ComboBox>
-			<s:Label fontWeight="bold" paddingLeft="20" fontSize="14" width="100"  text="Variance:"/>
-			<cl:NumberInput fractionalDigits="5" change="refreshValues()" id="varT" width="80"/>
-		</mx:HBox>
-		<!--Diel-->
-		<mx:HRule width="100%" />
-			<s:Label fontWeight="bold" text="Diel" fontSize="16"/>
-		<mx:HRule width="100%"/>
-		<mx:HBox paddingTop="3" paddingBottom="3" horizontalScrollPolicy="auto" id="dielWindow">
+	
+<mx:HBox width="100%" horizontalAlign="left" backgroundColor="#EBF4FF" height="100%"
+		 paddingTop="15" paddingBottom="10" paddingRight="10" paddingLeft="10">
+	
+	<!-- left column -->
+	<s:VGroup width="260" paddingTop="-17">
+		
+		<mx:Form width="100%">
+			<!--<mx:FormHeading label="Stage Duration"/>-->
 			
+		<!--Stage Duration-->
+			<s:Label text="STAGE DURATION" styleName="section-titles"/>
+			<mx:FormItem label="User Defined Days:" styleName="form-labels-exception">
+				<s:HGroup verticalAlign="baseline">
+					<mx:NumericStepper id="durT" change="refreshValues()" width="60"/>
+					<!--<mx:Label text="days" styleName="form-measures" />-->
+				</s:HGroup>
+			</mx:FormItem>
+		
+			<s:HGroup verticalAlign="middle" horizontalAlign="center" width="100%">
+				<mx:HRule width="40"/>
+				<s:Label text="option"/>
+				<mx:HRule width="40"/>
+			</s:HGroup>
+			
+			<s:Label text="Temperature Model" styleName="section-titles-h3" paddingLeft="10"/>
+			<mx:FormItem label="Linear A:" styleName="form-labels">
+				<cl:NumberInput id="linAT" fractionalDigits="5" change="refreshValues()" width="40"/>
+			</mx:FormItem>
+			<mx:FormItem label="Linear B:" styleName="form-labels">
+				<cl:NumberInput id="linBT" fractionalDigits="5" change="refreshValues()" width="40"/>
+			</mx:FormItem>
+			
+		<!--Settlement Depth-->
+			<mx:HRule width="100%"/>
+			<s:Label text="SETTLEMENT DEPTH" styleName="section-titles"/>
+			<mx:FormItem label="Upper:" id="upText" styleName="form-labels">
+				<s:HGroup verticalAlign="baseline">
+					<cl:NumberInput id="upSettle" fractionalDigits="5" change="refreshValues()" width="40"/>
+					<mx:Label text="m" styleName="form-measures" />
+				</s:HGroup>
+			</mx:FormItem>
+			<mx:FormItem label="Lower:" id="lowText" styleName="form-labels">
+				<s:HGroup verticalAlign="baseline">
+					<cl:NumberInput id="lowSettle" fractionalDigits="5" change="refreshValues()" width="40"/>
+					<mx:Label text="m" styleName="form-measures" />
+				</s:HGroup>
+			</mx:FormItem>
+		
+		
+		<!--Capability-->
+			<mx:HRule width="100%"/>
+			<s:Label text="CAPABILITY" styleName="section-titles"/>
+						
+						<mx:FormItem label="Vertical Swim Speed:" styleName="form-labels">
+							<cl:NumberInput id="vssT" fractionalDigits="5" change="refreshValues()" width="40"/>
+						</mx:FormItem>
+						<mx:FormItem label="Variance:" styleName="form-labels">
+							<cl:NumberInput id="varT" fractionalDigits="5" change="refreshValues()" width="40"/>
+						</mx:FormItem>
+
+			
+			<s:VGroup alpha="0.3">
+				
+			<s:Label text="Swim Turning:" styleName="form-labels" paddingLeft="40" paddingTop="10"/>
+			<!--<mx:FormItem label="" styleName="form-labels" direction="vertical">-->
+							<mx:ComboBox id="swimT" change="refreshValues()" height="25" selectionColor="#CAE8E8" paddingBottom="2">
+								<mx:dataProvider>
+									<mx:ArrayList>
+										<fx:Object label="Reverses swim direction" value="reverse"/>
+										<fx:Object label="Random selection of swim direction" value="random"/>
+									</mx:ArrayList>
+								</mx:dataProvider>
+							</mx:ComboBox>
+						<!--</mx:FormItem>-->
+			
+			<s:Label text="Non-Swim Turning:" styleName="form-labels" paddingLeft="12" paddingTop="10"/>
+						<!--<mx:FormItem label="" styleName="form-labels" direction="vertical">-->
+							<mx:ComboBox id="noswimT" change="refreshValues()" height="25" selectionColor="#CAE8E8" paddingBottom="2">
+								<mx:dataProvider>
+									<mx:ArrayList>
+										<fx:Object label="Always swim downward" value="downward"/>
+										<fx:Object label="Always swim upward" value="upward"/>
+										<fx:Object label="Random selection of swim direction" value="random"/>
+									</mx:ArrayList>
+								</mx:dataProvider>
+							</mx:ComboBox>
+						<!--</mx:FormItem>-->
+			</s:VGroup>
+
+		</mx:Form>
+			
+	</s:VGroup><!-- end / left column -->
+	
+	<mx:VRule width="1" height="100%"/>
+	
+	<!-- right column -->
+	<s:VGroup>	
+		
+		<!--Capability  //ALTERNATE LAYOUT WHERE THIS IS TO THE RIGHT, AND ABOVE THE DIEL //
+		<mx:HRule width="100%"/>
+		<s:Label text="CAPABILITY" styleName="section-titles"/>
+		
+		<mx:HBox width="100%" paddingBottom="-10">	
+			<s:VGroup>
+			<mx:Form>
+			<mx:FormItem label="Vertical Swim Speed:" styleName="form-labels">
+				<cl:NumberInput id="vssT" fractionalDigits="5" change="refreshValues()" width="40"/>
+			</mx:FormItem>
+			<mx:FormItem label="Variance:" styleName="form-labels">
+				<cl:NumberInput id="varT" fractionalDigits="5" change="refreshValues()" width="40"/>
+			</mx:FormItem>
+			</mx:Form>
+			</s:VGroup>
+		
+			<s:VGroup>
+			<mx:Form>
+			<mx:FormItem label="Swim Turning:" styleName="form-labels" direction="vertical">
+				<mx:ComboBox id="swimT" change="refreshValues()" height="25" selectionColor="#CAE8E8" paddingBottom="2" >
+					<mx:dataProvider>
+						<mx:ArrayList>
+							<fx:Object label="Reverses swim direction" value="reverse"/>
+							<fx:Object label="Random selection of swim direction" value="random"/>
+						</mx:ArrayList>
+					</mx:dataProvider>
+				</mx:ComboBox>
+			</mx:FormItem>
+			
+			<mx:FormItem label="Non-Swim Turning:" styleName="form-labels" direction="vertical">
+				<mx:ComboBox id="noswimT" change="refreshValues()" height="25" selectionColor="#CAE8E8" paddingBottom="2" >
+					<mx:dataProvider>
+						<mx:ArrayList>
+							<fx:Object label="Always swim downward" value="downward"/>
+							<fx:Object label="Always swim upward" value="upward"/>
+							<fx:Object label="Random selection of swim direction" value="random"/>
+						</mx:ArrayList>
+					</mx:dataProvider>
+				</mx:ComboBox>
+			</mx:FormItem>
+			</mx:Form>
+			</s:VGroup>
 		</mx:HBox>
+		-->
+		
+		<!--Diel-->
+		<!--<mx:HRule width="100%" />-->
+		<s:Label text="DIEL" styleName="section-titles"/>
+		<mx:HBox id="dielWindow" horizontalScrollPolicy="auto" verticalAlign="top" width="100%"
+				 paddingTop="0" paddingBottom="10" >
+		</mx:HBox>
+		
 		<!--Taxis-->
 		<mx:HRule width="100%" />
-			<s:Label fontWeight="bold" text="Taxis" fontSize="16"/>
-		<mx:HRule width="100%"/>
-		<mx:HBox paddingTop="3" paddingBottom="3" id="taxisWindow" horizontalScrollPolicy="auto">
-			
+		<s:Label text="TAXIS" styleName="section-titles"/>
+		<mx:HBox id="taxisWindow" horizontalScrollPolicy="auto">
 		</mx:HBox>
+	</s:VGroup><!-- end / right column -->
+
+</mx:HBox>
+
+	
+	
+	<!-- ORIGINAL
+	<mx:VBox width="100%" horizontalAlign="center"
+	paddingTop="15" paddingBottom="10" backgroundColor="#EBF4FF" height="100%">
+	<mx:HBox width="90%" verticalAlign="middle" horizontalAlign="left" paddingBottom="10">
+	<s:Label fontWeight="bold" fontSize="14" width="70" text="Duration:"/>
+	<s:NumericStepper id="durT" change="refreshValues()"/>
+	<s:Label fontWeight="bold" fontSize="13" width="58"  text="days"/>
+	<s:Label fontWeight="bold" fontSize="14" width="70"  text="Linear A:"/>
+	<cl:NumberInput fractionalDigits="5" width="70" change="refreshValues()" id="linAT"/>
+	<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="70" text="Linear B:"/>
+	<cl:NumberInput fractionalDigits="5" change="refreshValues()" width="70" id="linBT"/>
+	<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="130" id="upText" text="Upper Settlement:"/>
+	<cl:NumberInput fractionalDigits="5" change="refreshValues()" width="70" id="upSettle"/>
+	<s:Label fontWeight="bold" paddingLeft="5" fontSize="14" width="130" id="lowText" text="Lower Settlement:"/>
+	<cl:NumberInput fractionalDigits="5" change="refreshValues()" width="70" id="lowSettle"/>
+	</mx:HBox>
+	
+	<!-/-Capability-/->
+	<mx:HRule width="90%"/>
+	<s:Label fontWeight="bold" text="Capability" fontSize="16"/>
+	<mx:HBox width="800" paddingTop="5" verticalAlign="middle" horizontalAlign="left" paddingBottom="10">
+		<s:Label fontWeight="bold" fontSize="14" width="220"  text="Swim Turning:"/>
+		<mx:ComboBox selectionColor="#CAE8E8" id="swimT" change="refreshValues()" width="285">
+			<mx:dataProvider>
+				<mx:ArrayList>
+					<fx:Object label="Reverses swimming direction" value="reverse"/>
+					<fx:Object label="Random selection of swimming direction" value="random"/>
+				</mx:ArrayList>
+			</mx:dataProvider>
+		</mx:ComboBox>
+		<s:Label fontWeight="bold" paddingLeft="20" fontSize="14" width="100"  text="VSS:"/>
+		<cl:NumberInput fractionalDigits="5" id="vssT" change="refreshValues()" width="80"/>
+	</mx:HBox>
+	<mx:HBox paddingTop="5" paddingBottom="5" width="800" verticalAlign="middle" horizontalAlign="left">
+		<s:Label fontWeight="bold" fontSize="14" width="220"  text="Non-Swim Turning:"/>
+		<mx:ComboBox selectionColor="#CAE8E8" change="refreshValues()" id="noswimT" width="285">
+			<mx:dataProvider>
+				<mx:ArrayList>
+					<fx:Object label="Always swim downward" value="downward"/>
+					<fx:Object label="Always swim upward" value="upward"/>
+					<fx:Object label="Random selection of swimming direction" value="random"/>
+				</mx:ArrayList>
+			</mx:dataProvider>
+		</mx:ComboBox>
+		<s:Label fontWeight="bold" paddingLeft="20" fontSize="14" width="100"  text="Variance:"/>
+		<cl:NumberInput fractionalDigits="5" change="refreshValues()" id="varT" width="80"/>
+	</mx:HBox>
+	<!-/-Diel-/->
+	<mx:HRule width="90%" />
+	<s:Label fontWeight="bold" text="Diel" fontSize="16"/>
+	<mx:HBox paddingTop="3" paddingBottom="13" horizontalScrollPolicy="auto" id="dielWindow">
+		
+	</mx:HBox>
+	<!-/-Taxis-/->
+	<mx:HRule width="90%" />
+	<s:Label fontWeight="bold" text="Taxis" fontSize="16"/>
+	<mx:HBox paddingTop="3" id="taxisWindow" horizontalScrollPolicy="auto">
+		
+	</mx:HBox>
 	</mx:VBox>
+	-->
 </mx:Canvas>

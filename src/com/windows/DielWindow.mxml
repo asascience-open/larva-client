@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009"  height="100%" creationComplete="init()" horizontalScrollPolicy="off" cornerRadius="7"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xA9ABAB" verticalScrollPolicy="off" creationPolicy="all"
-		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009"  
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   xmlns:cl="com.classes.*" 
+		   xmlns:esri="http://www.esri.com/2008/ags" 
+		   horizontalScrollPolicy="off" verticalScrollPolicy="off" creationPolicy="all" creationComplete="init()"
+		   cornerRadius="5" backgroundColor="0x8BBCE8" height="100%" >
 <fx:Script>
 	<![CDATA[
 		import com.classes.*;
@@ -39,6 +43,115 @@
 		}
 	]]>
 </fx:Script>
+	<!--<s:BorderContainer backgroundColor="0xC6DBEF">-->
+		
+	<s:VGroup verticalAlign="top" horizontalAlign="left">
+		
+		<!-- controls the outer gray box / centers smaller diel boxes -->
+		<s:VGroup width="190" horizontalAlign="center" paddingLeft="0" paddingBottom="0">
+			
+			<s:Label text="{this.label}" width="100%" styleName="small-box-titles"/>
+			
+			<mx:Form width="100%" paddingTop="0" paddingRight="0" paddingBottom="-20" paddingLeft="5">	
+					<mx:FormItem label="Minimum:" styleName="form-labels">
+						<cl:NumberInput id="minStep" fractionalDigits="5" text="{minD}" change="init();" width="40"/>
+					</mx:FormItem>
+					<mx:FormItem label="Maximum:" styleName="form-labels">
+						<cl:NumberInput id="maxStep" fractionalDigits="5" text="{maxD}" change="init();" width="40"/>
+					</mx:FormItem>
+					<mx:FormItem paddingTop="0" paddingLeft="-75">
+						<mx:HRule width="172" height="1"/>	
+					</mx:FormItem>
+				</mx:Form>
+		
+		<mx:ViewStack id="myViewStack" selectedIndex="{selectedIndex}" width="100%" height="100%" paddingTop="-15">			
+				<s:NavigatorContent>
+					<s:VGroup verticalAlign="top" paddingLeft="18" paddingBottom="-5">
+						<mx:Form width="100%" paddingLeft="0">
+							<mx:FormItem label="+ or -  :" styleName="form-labels">
+								<mx:ComboBox id="plusMin" change="init();" selectedIndex="{selectedIndexPlus}" dataProvider="['+','-']" selectionColor="#CAE8E8" 
+											 width="77" />
+							</mx:FormItem>
+							<mx:FormItem label="Hours:" styleName="form-labels">
+								<mx:NumericStepper id="hoursPick" change="init();" value="{sunHour}" maximum="12" minimum="1" height="25" width="77"/>
+							</mx:FormItem>
+							<mx:FormItem label="Method:" styleName="form-labels">
+								<mx:ComboBox id="riseSet" change="init();" selectedIndex="{selectedSun}" dataProvider="['sunset','sunrise']"
+											 selectionColor="#CAE8E8"  height="25" width="77" paddingBottom="2" />
+							</mx:FormItem>
+						</mx:Form>
+					</s:VGroup>
+				</s:NavigatorContent>
+				<s:NavigatorContent>
+					<s:VGroup verticalAlign="top" paddingLeft="24" paddingBottom="-5">
+						<mx:Form width="100%" paddingLeft="0">
+							<mx:FormItem label="Date:" styleName="form-labels">
+								<mx:DateField id="datePick" change="init();" selectedDate="{specificDate}" width="98"/>
+							</mx:FormItem>
+							<mx:FormItem label="Hours:" styleName="form-labels">
+								<mx:NumericStepper id="hoursPickspecific" change="init();" value="{specificDate.hours}" maximum="23" minimum="0" width="73"/>
+							</mx:FormItem>
+						</mx:Form>
+					</s:VGroup>
+				</s:NavigatorContent>
+			</mx:ViewStack>
+		</s:VGroup>
+		</s:VGroup>	
+<!--	</s:BorderContainer> -->	
+	
+<!--	<s:HGroup verticalAlign="top" horizontalAlign="left">
+		
+		<s:VGroup>
+			<s:Label text="{this.label}" width="100%" styleName="small-box-titles"/>
+			<s:VGroup>
+				<mx:Form width="100%" paddingTop="0" paddingLeft="1" paddingRight="0">	
+					<mx:FormItem label="Min:" styleName="form-labels">
+						<cl:NumberInput id="minStep" fractionalDigits="5" text="{minD}" change="init();" width="35" />
+					</mx:FormItem>
+					<mx:FormItem label="Max:" styleName="form-labels">
+						<cl:NumberInput id="maxStep" fractionalDigits="5" text="{maxD}" change="init();" width="35" />
+					</mx:FormItem>
+				</mx:Form>
+			</s:VGroup>
+		</s:VGroup>
+		<mx:VRule width="1" height="80%" verticalCenter="0"/>
+		<s:VGroup>
+			<mx:ViewStack id="myViewStack" selectedIndex="{selectedIndex}" width="100%" height="100%">
+				
+				<s:NavigatorContent>
+					<s:VGroup verticalAlign="top" paddingTop="9" >
+						<mx:Form width="100%" paddingLeft="0">
+							<mx:FormItem label="+ or  - :" styleName="form-labels">
+								<mx:ComboBox id="plusMin" change="init();" selectedIndex="{selectedIndexPlus}" dataProvider="['+','-']" selectionColor="#CAE8E8" width="58"/>
+							</mx:FormItem>
+							<mx:FormItem label="Hours:" styleName="form-labels">
+								<mx:NumericStepper id="hoursPick" change="init();" value="{sunHour}" maximum="12" minimum="1" height="25" width="58"/>
+							</mx:FormItem>
+							<mx:FormItem label="Method:" styleName="form-labels">
+								<mx:ComboBox id="riseSet" change="init();" selectedIndex="{selectedSun}" dataProvider="['sunset','sunrise']"
+											 selectionColor="#CAE8E8"  height="25" width="77" paddingBottom="2" />
+							</mx:FormItem>
+						</mx:Form>
+					</s:VGroup>
+				</s:NavigatorContent>
+				<s:NavigatorContent>
+					<s:VGroup verticalAlign="top" paddingTop="9">
+						<mx:Form width="100%" paddingLeft="0">
+							<mx:FormItem label="Date:" styleName="form-labels">
+								<mx:DateField id="datePick" change="init();" selectedDate="{specificDate}" width="98"/>
+							</mx:FormItem>
+							<mx:FormItem label="Hours:" styleName="form-labels">
+								<mx:NumericStepper id="hoursPickspecific" change="init();" value="{specificDate.hours}" maximum="23" minimum="0" width="73"/>
+							</mx:FormItem>
+						</mx:Form>
+					</s:VGroup>
+				</s:NavigatorContent>
+			</mx:ViewStack>
+		</s:VGroup>
+	</s:HGroup>	
+-->
+	
+	<!-- ORIGINAL
 	<mx:VBox horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5">
 		<mx:Label text="{this.label}" fontSize="14" textDecoration="underline"/>
 		<mx:HBox verticalAlign="middle">
@@ -68,4 +181,5 @@
 			</s:NavigatorContent>
 		</mx:ViewStack>
 	</mx:VBox>
+	-->
 </mx:Canvas>

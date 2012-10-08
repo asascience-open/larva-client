@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF" 
-		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
-	<fx:Style>
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009"
+		   xmlns:s="library://ns.adobe.com/flex/spark"  
+		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" 
+		   backgroundColor="0xC6DBEF" width="100%" height="100%"
+		   creationComplete="init()">
+<!--   minWidth="955" minHeight="600" -->
+<!--	<fx:Style>
 		@namespace s "library://ns.adobe.com/flex/spark";
 		@namespace mx "library://ns.adobe.com/flex/mx";
 		@namespace cl "com.classes.*";
@@ -16,7 +19,8 @@
 			backgroundColor:black;
 			borderStyle:none;
 		}
-	</fx:Style>
+	</fx:Style>-->
+
 <fx:Script>
 	<![CDATA[
 		import com.classes.*;
@@ -29,14 +33,25 @@
 		import com.esri.ags.layers.GraphicsLayer;
 		import com.esri.ags.utils.JSONUtil;
 		import com.skins.ToolTipSkin;
+		import com.skins.helpPopupContainer;
+		import com.skins.largeButtons;
+		import com.skins.regularButtons;
 		
 		import mx.collections.ArrayCollection;
 		import mx.controls.Alert;
+		import mx.controls.dataGridClasses.DataGridColumn;
+		import mx.controls.dataGridClasses.DataGridItemRenderer;
 		import mx.events.ListEvent;
 		import mx.events.ToolTipEvent;
+		import mx.managers.PopUpManager;
+		import mx.messaging.channels.StreamingAMFChannel;
 		import mx.rpc.events.FaultEvent;
 		import mx.rpc.events.ResultEvent;
 		import mx.rpc.http.HTTPService;
+		import mx.states.AddItems;
+		
+		import spark.components.Panel;
+		import spark.events.GridEvent;
 
 		[Bindable]
 		public var behaviorsList:Object = new Object;
@@ -55,7 +70,8 @@
 		private var spatRef:SpatialReference = new SpatialReference(4326);
 		private var spatRefWM:SpatialReference = new SpatialReference(102100);
 		private var loadedFileData:Object;		
-		private var mapExtent:Extent = new Extent(-11294052,-4175045,5221238,6822104,spatRefWM);
+		private var mapExtent:Extent = new Extent();
+		//private var mapExtent:Extent = new Extent(-11294052,-4175045,5221238,6822104,spatRefWM);
 		
 		private function init():void
 		{
@@ -150,6 +166,7 @@
 		private function mapReset():void{
 			map.removeLayer(map.getLayer("bound"));
 			map.extent = mapExtent;
+			
 			behSelectedID = "";
 			loadedFileName.text = "";
 		}
@@ -264,6 +281,7 @@
 					graphLayer.id = "bound";
 					graphLayer.add(graGraphic);
 					map.addLayer(graphLayer); 
+					map.zoomOut();
 					noLoc.visible = false;
 				}
 				else{
@@ -273,10 +291,11 @@
 			}
 		}
 		private function dgClickHandler(event:ListEvent):void
+//		private function dgClickHandler(event:GridEvent):void
 		{
 			map.removeLayer(map.getLayer("bound"));
-			goButt.setStyle("fontWeight","bold");
-			goButt.setStyle("fontSize",13);
+			//goButt.setStyle("fontWeight","bold");
+			//goButt.setStyle("fontSize",13);
 			zoomLocationExtent(event.itemRenderer.data);
 			behSelectedID = event.itemRenderer.data._id;
 			this.parentApplication.beh = event.itemRenderer.data._id;
@@ -288,27 +307,152 @@
 			ptt.text = title;
 			event.toolTip = ptt;
 		}
+
+ 		 /* THIS IS A RECAP OF ALL DATA AS A SINGLE POPUP, BUT ONLY WORKS WITH SPARK DataGrid
+		private function buildToolTip(item:Object, column:GridColumn):String {
+			var myString:String = "";
+			if (item != null) {
+				myString = "<bold>FULL DETAILS</bold>\n\n";
+				myString += "Name: " + item.name + "\n";
+				myString += "Genus: " + item.genus + "\n";
+				myString += "Species: " + item.species + "\n";
+				myString += "Common Name: " + item.common_name + "\n";
+				myString += "Created: " + item.created + "\n";
+				myString += "Notes: " + item.notes + "\n";
+				myString += "Status: " + item.status + "\n";
+				myString += "User: " + item.user + "\n";
+			}
+			return myString;
+		} */  
+		
+		/* private function createToolTip(event:ListEvent):void {
+			var str:String =  DataGridItemRenderer(event.itemRenderer).data.label;
+			bDG.toolTip = str;
+		}
+		
+		private function deleteToolTip(obj:Object):void {
+			bDG.toolTip = null;
+		} */
+		
+		protected function button1_clickHandler(event:MouseEvent):void
+		{
+			//this is the size of the full popup's container background
+			var instructions:helpPopupContainer = new helpPopupContainer();
+			instructions.open(this, true);
+			instructions.width = stage.width;
+			instructions.height = stage.height;
+			
+			PopUpManager.centerPopUp(instructions);
+		}
 	]]>
 </fx:Script>
 	<fx:Declarations>
-		<esri:SimpleLineSymbol id="lineSymbol" color="0x555555" width="2" alpha="1" style="solid"/>
-		<esri:SimpleFillSymbol id="polygonSymbol" color="0x999999" alpha=".5" style="solid" outline="{lineSymbol}"/>
+		<esri:SimpleLineSymbol id="lineSymbol" color="0xFFCA00" width="2" alpha=".8" style="solid"/>
+		<esri:SimpleFillSymbol id="polygonSymbol" color="0x999999" alpha=".2" style="solid" outline="{lineSymbol}"/>
 	</fx:Declarations>
+	<s:Button styleName="btn-help" buttonMode="true" click="button1_clickHandler(event)" right="40" top="20"/>
+	
+	<s:VGroup width="100%" height="100%" horizontalAlign="center" paddingTop="5"  paddingRight="25" paddingLeft="25" >
+		
+		<s:Label text="Available Behaviors" styleName="pageTitles"/>
+						
+		<!-- remove this if you want to stack vertically -->
+		<mx:HRule width="100%"/>
+		
+		<!-- centers content, then set left to 0 to contrain it left -->
+		<s:HGroup width="100%" horizontalAlign="center" minHeight="550">
+			<s:VGroup height="100%" width="50%" horizontalAlign="left">
+				
+				<s:Label text="Choose One Behavior" styleName="msg-action"/>
+				
+				<!-- neg padding is a hack / some reason this form element isn't aligning left -->
+				<s:HGroup verticalAlign="middle" paddingLeft="-110">
+					<mx:Label id="noLoc" text="No Location Set" visible="false" fontSize="13" fontWeight="bold" color="red" />
+					<s:Label text="Search Behaviors:" />
+					<s:TextInput id="listSearchText" width="150" prompt="Enter a keyword"/>
+					<s:Button label="Search" toolTip="Search using keyword" toolTipCreate="createCustomTip('', event)" click="search()" skinClass="com.skins.regularButtons"/>
+					<mx:CheckBox id="owned" label="Search Public Behaviors" selected="true" toolTipCreate="createCustomTip('', event)" toolTip="Uncheck to only search your private Behaviors" />
+				</s:HGroup>
+				
+				<!--<mx:DataGrid id="bDG" itemClick="{dgClickHandler(event)}" dataProvider="{behaviorsList}" 
+							 width="100%" rowCount="18" styleName="dataGridText" 
+							 itemRollOut="deleteToolTip(event)"
+							 itemRollOver="createToolTip(event)"
+							 variableRowHeight="true">-->
+					
+				<mx:DataGrid id="bDG" itemClick="{dgClickHandler(event)}" dataProvider="{behaviorsList}" 
+							 width="100%" rowCount="18" styleName="dataGridText">
+					<mx:columns>
+						<mx:DataGridColumn headerText="Name"		dataField="name"  showDataTips="true"/>
+						<mx:DataGridColumn headerText="Genus" 		dataField="genus" showDataTips="true"/>
+						<mx:DataGridColumn headerText="Species" 	dataField="species" showDataTips="true"/>
+						<mx:DataGridColumn headerText="Common Name"	dataField="common_name" showDataTips="true" width="80"/>
+						<mx:DataGridColumn headerText="Created" 	dataField="created" showDataTips="true"/>
+						<mx:DataGridColumn headerText="Notes" 		dataField="notes" showDataTips="true"/>
+						<mx:DataGridColumn headerText="Status" 		dataField="status" showDataTips="true"/>
+						<mx:DataGridColumn headerText="User" 		dataField="user"  showDataTips="true"/>
+					</mx:columns>
+				</mx:DataGrid>
+				
+				<!--<s:DataGrid id="bDG" gridClick="{dgClickHandler(event)}" dataProvider="{behaviorsList}" 
+							width="100%" height="300" styleName="dataGridText" dataTipFunction="buildToolTip" > 
+					<s:columns>
+						<s:ArrayCollection>							
+						<s:GridColumn headerText="Name"			dataField="name"  showDataTips="true"/>
+						<s:GridColumn headerText="Genus" 		dataField="genus" showDataTips="true" />
+						<s:GridColumn headerText="Species" 		dataField="species" showDataTips="true" />
+						<s:GridColumn headerText="Common Name"	dataField="common_name" showDataTips="true" />
+						<s:GridColumn headerText="Created" 		dataField="created" showDataTips="true" />
+						<s:GridColumn headerText="Notes" 		dataField="notes" showDataTips="true" />
+						<s:GridColumn headerText="Status" 		dataField="status" showDataTips="true" />
+						<s:GridColumn headerText="User" 		dataField="user" showDataTips="true"/>
+						</s:ArrayCollection>
+					</s:columns>
+				</s:DataGrid> -->
+				
+				
+				<s:HGroup verticalAlign="middle" paddingTop="4">
+					<s:Label id="loadedFileName" fontWeight="bold" fontSize="13" toolTipCreate="createCustomTip('', event)" toolTip="Your File" click="onUpload()"/>
+					<s:Button label="Upload New Behavior File" toolTipCreate="createCustomTip('', event)" toolTip="Upload Behavior File" click="onUpload()" skinClass="com.skins.regularButtons"/>
+					<s:Button label="Create New Behavior" toolTipCreate="createCustomTip('', event)" toolTip="Navigate to Behavior Page" click="navigateToURL(new URLRequest('http://larva-library.herokuapp.com/'), 'AGOL')" skinClass="com.skins.regularButtons"/>
+					<s:Button label="Refresh List" toolTipCreate="createCustomTip('', event)" toolTip="Refresh values if Behaviors have been changed" click="refreshValues()" skinClass="com.skins.regularButtons"/>
+					<s:CheckBox label="Edit Behavior" id="editFirst" toolTipCreate="createCustomTip('', event)" selected="false" toolTip="Check to Edit configuration, then click NEXT STEP to make changes" />
+				</s:HGroup>
+				
+			</s:VGroup>			
+			
+			<s:VGroup height="100%" width="50%" paddingTop="0" right="0">
+				<s:Label text="General Distribution Region" styleName="msg-action"/>
+				<esri:Map id="map" width="100%" height="100%" 
+						  wrapAround180="true" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" />
+			</s:VGroup>
+		</s:HGroup>	
+		
+		
+		<s:HGroup verticalAlign="middle" horizontalAlign="right" width="100%" height="40" paddingTop="20" paddingRight="120">
+			<s:Button id="goButt" label="NEXT STEP &gt;" height="40" width="140" toolTipCreate="createCustomTip('', event)" 
+					  toolTip="Go to Run Model Page" click="nextTab()" skinClass="com.skins.largeButtons"/>
+		</s:HGroup>
+		
+	</s:VGroup>
+  	
+	
+	<!-- ORIGINAL
 	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
 		<s:Label text="Available Behaviors" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
 		<mx:HRule width="100%"/>
-			<mx:HBox verticalAlign="middle" horizontalAlign="left" width="85%" paddingTop="3" paddingBottom="3">
-				<mx:HBox verticalAlign="middle" cornerRadius="5" backgroundColor="0x4A4A4A">
-					<mx:Label fontWeight="bold" paddingLeft="3" paddingRight="3" fontSize="16" color="0xEFF3FF" text="Choose One Behavior" toolTipCreate="createCustomTip('', event)" toolTip="Choose One Behavior" />
-				</mx:HBox>
-				<mx:Label fontSize="13" fontWeight="bold" color="red" id="noLoc" paddingLeft="230"  text="No Location Set" visible="false" />
-				<mx:Label fontSize="13" text="Search Behaviors:" toolTip="Search Behaviors:" />
-				<mx:TextInput id="listSearchText" width="150"/>
-				<s:Button label="Search" toolTip="Search using keyword" toolTipCreate="createCustomTip('', event)" click="search()"/>
-				<mx:CheckBox id="owned" label="Search Public Behaviors" selected="true" toolTipCreate="createCustomTip('', event)" toolTip="Uncheck to only search your private Behaviors" />
+		<mx:HBox verticalAlign="middle" horizontalAlign="left" width="85%" paddingTop="3" paddingBottom="3">
+			<mx:HBox verticalAlign="middle" cornerRadius="5" backgroundColor="0x4A4A4A">
+				<mx:Label fontWeight="bold" paddingLeft="3" paddingRight="3" fontSize="16" color="0xEFF3FF" text="Choose One Behavior" toolTipCreate="createCustomTip('', event)" toolTip="Choose One Behavior" />
 			</mx:HBox>
+			<mx:Label fontSize="13" fontWeight="bold" color="red" id="noLoc" paddingLeft="230"  text="No Location Set" visible="false" />
+			<mx:Label fontSize="13" text="Search Behaviors:" toolTip="Search Behaviors:" />
+			<mx:TextInput id="listSearchText" width="150"/>
+			<s:Button label="Search" toolTip="Search using keyword" toolTipCreate="createCustomTip('', event)" click="search()"/>
+			<mx:CheckBox id="owned" label="Search Public Behaviors" selected="true" toolTipCreate="createCustomTip('', event)" toolTip="Uncheck to only search your private Behaviors" />
+		</mx:HBox>
 		<mx:HRule width="100%"/>
-		<mx:DataGrid selectionColor="0xCCCCCC" id="bDG" itemClick="{dgClickHandler(event)}" dataProvider="{behaviorsList}" width="85%" rowCount="4">
+		<mx:DataGrid selectionColor="0xCCCCCC" id="bDG" itemClick="{dgClickHandler(event)}" dataProvider="{behaviorsList}" width="50%" rowCount="4">
 			<mx:columns>
 				<mx:DataGridColumn dataField="name"/>
 				<mx:DataGridColumn dataField="genus"/>
@@ -318,7 +462,7 @@
 				<mx:DataGridColumn dataField="notes"/>
 				<mx:DataGridColumn headerText="owner" dataField="status"/>
 				<mx:DataGridColumn dataField="user"/>
-				<!--<mx:DataGridColumn dataField="geometry"/>-->
+				<!/-<mx:DataGridColumn dataField="geometry"/>/->
 			</mx:columns>
 		</mx:DataGrid>
 		<mx:HBox verticalAlign="middle" paddingTop="4">
@@ -330,5 +474,5 @@
 			<s:CheckBox label="Edit Behavior" toolTipCreate="createCustomTip('', event)" id="editFirst" selected="false" toolTip="Check to Edit configuration" />
 		</mx:HBox>
 		<esri:Map id="map" wrapAround180="true" width="85%" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" height="280" />
-	</mx:VBox>
+	</mx:VBox> -->
 </mx:Canvas>

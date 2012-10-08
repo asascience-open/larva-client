@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF" 
-		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:esri="http://www.esri.com/2008/ags" >
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009"
+		   xmlns:s="library://ns.adobe.com/flex/spark"
+		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:esri="http://www.esri.com/2008/ags" 
+		   backgroundColor="0xC6DBEF" width="100%" height="100%"
+		   creationComplete="init()">
+	<!--   minWidth="955" minHeight="600" -->
 	<fx:Script>
 		<![CDATA[
 			import com.classes.*;
@@ -15,19 +18,26 @@
 			import com.esri.ags.symbols.SimpleMarkerSymbol;
 			import com.esri.ags.utils.JSONUtil;
 			import com.skins.ToolTipSkin;
+			import com.skins.helpPopupContainer;
+			import com.skins.regularButtons;
 			
 			import mx.controls.Alert;
+			import mx.events.FlexEvent;
 			import mx.events.ToolTipEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.http.HTTPService;
+			import mx.skins.ProgrammaticSkin;
 			
 			[Bindable]
 			private var modelList:Object = new Object;
 			[Bindable]
 			public var modelrunsURL:String = new String;
 			[Bindable]
-			public var backgroundMapU:String = "";
+			public var forcingDomain:GraphicsLayer = new GraphicsLayer;
+			[Bindable]
+			public var backgroundMapU:String = new String;
 			private var spatRefWM:SpatialReference = new SpatialReference(102100);
 			private var mapExtent:Extent = new Extent(-11294052,-4175045,5221238,6822104,spatRefWM);
 			
@@ -138,7 +148,8 @@
 					graphLayer.add(startGraphicMarker);
 					graphLayer.add(endGraphicMarker);
 					graphLayer.add(graGraphic);
-					map.addLayer(graphLayer); 
+					map.addLayer(graphLayer);
+					map.zoomOut();
 				}
 				else{
 				}
@@ -149,6 +160,27 @@
 				ptt.text = title;
 				event.toolTip = ptt;
 			}
+			
+			// JL added
+			private function back():void
+			{
+				var object:Object = new Object();
+				object["step"] = "modelRun";
+				object["id"] = forcingDomain;
+				AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
+			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				//this is the size of the full popup's container background
+				var instructions:helpPopupContainer = new helpPopupContainer();
+				instructions.open(this, true);
+				instructions.width = stage.width;
+				instructions.height = stage.height;
+				
+				PopUpManager.centerPopUp(instructions);
+			}
+			
 		]]>
 	</fx:Script>
 	
@@ -157,6 +189,85 @@
 							   width="3"
 							   color="#6E6E6E" style="solid"/>
 	</fx:Declarations>
+	<s:Button styleName="btn-help" buttonMode="true" click="button1_clickHandler(event)" right="40" top="20"/>
+	
+	<s:VGroup width="100%" height="100%" horizontalAlign="center" paddingTop="5"  paddingRight="25" paddingLeft="25">
+		
+		<s:Label text="Your Particle Models" styleName="pageTitles" />
+		
+		<!-- remove this if you want to stack vertically -->
+		<mx:HRule width="100%"/>
+		
+		<!-- centers content, then set left to 0 to contrain it left -->
+		<s:HGroup width="100%" horizontalAlign="center" minHeight="550">
+			<s:VGroup height="100%" width="50%" horizontalAlign="left" gap="0">
+				
+				<s:Label text="Model List" styleName="msg-action" paddingBottom="5"/>
+				
+				<mx:DataGrid id="runs" dataProvider="{modelList}" width="100%" rowCount="18" styleName="dataGridText" verticalAlign="middle">
+					<mx:columns>
+						<mx:DataGridColumn headerText="Created" dataField="created"  width="110" showDataTips="true"/>
+						<mx:DataGridColumn headerText="User" 	dataField="email" showDataTips="true"/>
+						<mx:DataGridColumn headerText="Progress/Status" dataField="status" itemRenderer="com.windows.statusRenderer" textAlign="center" fontWeight="bold" width="110" />
+						<mx:DataGridColumn headerText="Trackline" width="60" textAlign="center" >
+							<mx:itemRenderer>
+								<fx:Component>
+									<mx:LinkButton label="" enabled="{data.status =='SUCCESS'}" 
+											   click="outerDocument.viewTrack(data.trackline)" 
+											   icon="@Embed(source='../../assets/images/trackline.png')" />
+								</fx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+						<mx:DataGridColumn headerText="NetCDF" width="48" textAlign="center">
+							<mx:itemRenderer>
+								<fx:Component>
+									<mx:LinkButton label="" click="outerDocument.downloadUrl(data.output,'netcdf')" 
+											   enabled="{data.status =='SUCCESS'}"
+											   icon="@Embed(source='../../assets/images/downloadFile.png')" />
+								</fx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+						<mx:DataGridColumn headerText="SHP" width="48" textAlign="center" >
+							<mx:itemRenderer>
+								<fx:Component>
+									<mx:LinkButton label="" click="outerDocument.downloadUrl(data.output,'shp')" 
+											   enabled="{data.status =='SUCCESS'}"
+											   icon="@Embed(source='../../assets/images/downloadFile.png')"/>
+								</fx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+						<mx:DataGridColumn headerText="Delete" width="40" textAlign="center">
+							<mx:itemRenderer>
+								<fx:Component>
+									<mx:LinkButton label="" enabled="false" visible="false" 
+											   icon="@Embed(source='../../assets/images/trash.png')" />
+								</fx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+					</mx:columns>
+				</mx:DataGrid>
+				<s:HGroup verticalAlign="middle" paddingTop="4">
+					<s:Button label="Refresh List" toolTipCreate="createCustomTip('', event)"  toolTip="Refresh Status List" click="refresh()" skinClass="com.skins.regularButtons"/>
+				</s:HGroup>
+				
+			</s:VGroup>			
+			
+			<s:VGroup height="100%" width="50%" paddingTop="10" right="0">
+				<esri:Map id="map" width="100%" height="100%" 
+						  wrapAround180="true" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" />
+			</s:VGroup>
+		</s:HGroup>	
+				
+		<s:HGroup verticalAlign="middle" horizontalAlign="right" width="100%" height="40" paddingTop="20" paddingRight="120">
+			<s:Button id="goBack" label="&lt; PREVIOUS" height="40" width="140" toolTipCreate="createCustomTip('', event)" toolTip="Go Back" click="back()"/>
+		</s:HGroup>
+
+		
+	</s:VGroup>
+	
+	
+	
+<!-- ORIGINAL	
 	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
 		<s:Label text="Your Particle Models" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
 		<mx:HRule width="100%"/>
@@ -168,7 +279,7 @@
 			<mx:DataGrid dataProvider="{modelList}" id="runs" selectionColor="0xCCCCCC" width="100%" rowCount="6">
 				<mx:columns>
 					<mx:DataGridColumn dataField="_id" headerText="Model ID" minWidth="130"/>
-					<!--<mx:DataGridColumn dataField="name" width="80"/>-->
+					<!/-<mx:DataGridColumn dataField="name" width="80"/>/->
 					<mx:DataGridColumn dataField="created" minWidth="130"/>
 					<mx:DataGridColumn dataField="status" textAlign="center" fontWeight="bold" itemRenderer="com.windows.statusRenderer" headerText="Progress/Status"/>
 					<mx:DataGridColumn>
@@ -205,4 +316,5 @@
 		</mx:VDividedBox>
 		<s:Button fontWeight="bold" fontSize="14" label="Refresh List" id="goButt" toolTip="Refresh Status List" click="refresh()"/>
 	</mx:VBox>
+	-->
 </mx:Canvas>

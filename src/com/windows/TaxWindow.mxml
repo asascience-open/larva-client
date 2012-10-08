@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009"  height="100%" creationComplete="init()" horizontalScrollPolicy="off" cornerRadius="7"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xA9ABAB" verticalScrollPolicy="off" creationPolicy="all"
-		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:cl="com.classes.*" xmlns:esri="http://www.esri.com/2008/ags" >
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009"  
+		   xmlns:s="library://ns.adobe.com/flex/spark" 
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   xmlns:cl="com.classes.*" 
+		   xmlns:esri="http://www.esri.com/2008/ags" 
+		   horizontalScrollPolicy="off" verticalScrollPolicy="off" creationPolicy="all" creationComplete="init()"
+		   cornerRadius="5" backgroundColor="0x8BBCE8" height="100%" >
 	<fx:Script>
 		<![CDATA[
 			import com.classes.*;
-			
 			
 			[Bindable]
 			public var selectedIndexSeaW:int = 0;
@@ -28,26 +31,79 @@
 			}
 		]]>
 	</fx:Script>
+		
+		
+		<!-- controls the outer gray box -->
+		<s:VGroup height="100%" horizontalAlign="left" paddingLeft="0" paddingBottom="0">
+			
+			<s:Label text="{this.label}" width="100%" styleName="small-box-titles"/>
+			
+			<s:HGroup horizontalAlign="left" width="100%">
+				<s:VGroup width="40%">
+					
+			<mx:Form width="100%" paddingTop="0" paddingRight="-5" paddingLeft="5">	
+				<mx:FormItem label="Minimum:" styleName="form-labels">
+					<cl:NumberInput id="minStep" text="{minT}" change="init();" fractionalDigits="5" width="40"/>
+				</mx:FormItem>
+				<mx:FormItem label="Maximum:" styleName="form-labels">
+					<cl:NumberInput id="maxStep" text="{maxT}" change="init();" fractionalDigits="5" width="40"/>
+				</mx:FormItem>
+				
+			</mx:Form>					
+				</s:VGroup>
+				<mx:FormItem label="">
+					<mx:VRule width="1" height="55"/>
+				</mx:FormItem>
+				<s:VGroup width="60%">
+					
+			<mx:Form width="100%" paddingTop="0" paddingRight="10" paddingLeft="5" paddingBottom="-10">
+				
+				<mx:FormItem label="Gradient:" styleName="form-labels">
+					<cl:NumberInput id="grad" text="{gradientT}" change="init();" fractionalDigits="5" width="40"/>
+				</mx:FormItem>
+				<mx:FormItem label="Variable:" styleName="form-labels">
+						<mx:ComboBox id="riseSet" change="init();" selectedIndex="{selectedIndexSeaW}" selectionColor="#CAE8E8" 
+									 height="25" width="170" paddingBottom="2">
+							<mx:dataProvider>
+								<mx:ArrayList>
+									<fx:Object label="Sea Water Salinity" value="sea_water_salinity" units="PSU"/>
+									<fx:Object label="Sea Water Temperature" value="sea_water_temperature" units="\u00b0C"/>
+								</mx:ArrayList>
+							</mx:dataProvider>
+					</mx:ComboBox>
+				</mx:FormItem>
+			</mx:Form>
+			</s:VGroup>
+		</s:HGroup>
+		</s:VGroup>
+
+	
+	
+	<!-- ORIGINAL
 	<mx:VBox horizontalAlign="center" paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5">
-		<mx:Label text="{this.label}" fontSize="14" textDecoration="underline"/>
-		<mx:HBox verticalAlign="middle">
-			<s:Label text="Minimum: "/>
-			<cl:NumberInput change="init();" fractionalDigits="5" text="{minT}" width="50" id="minStep" paddingLeft="5"/>
-			<s:Label text="Maximum: " paddingLeft="5"/>
-			<cl:NumberInput change="init();" fractionalDigits="5" text="{maxT}" width="50" id="maxStep" paddingLeft="10"/>
-			<s:Label text="Gradient: " paddingLeft="5"/>
-			<cl:NumberInput change="init();" fractionalDigits="5" text="{gradientT}" width="50" id="grad" paddingLeft="10"/>
-		</mx:HBox>
-		<mx:HBox verticalAlign="middle">
-			<s:Label text="Variable: "/>
-			<mx:ComboBox selectionColor="#CAE8E8" change="init();" selectedIndex="{selectedIndexSeaW}" id="riseSet">
-				<mx:dataProvider>
-					<mx:ArrayList>
-						<fx:Object label="Sea Water Salinity" value="sea_water_salinity" units="PSU"/>
-						<fx:Object label="Sea Water Temperature" value="sea_water_temperature" units="\u00b0C"/>
-					</mx:ArrayList>
-				</mx:dataProvider>
-			</mx:ComboBox>
-		</mx:HBox>
+	<mx:Label text="{this.label}" fontSize="14" textDecoration="underline"/>
+	
+	<mx:HBox verticalAlign="middle">
+	<s:Label text="Minimum: "/>
+	<cl:NumberInput change="init();" fractionalDigits="5" text="{minT}" width="50" id="minStep" paddingLeft="5"/>
+	<s:Label text="Maximum: " paddingLeft="5"/>
+	<cl:NumberInput change="init();" fractionalDigits="5" text="{maxT}" width="50" id="maxStep" paddingLeft="10"/>
+	<s:Label text="Gradient: " paddingLeft="5"/>
+	<cl:NumberInput change="init();" fractionalDigits="5" text="{gradientT}" width="50" id="grad" paddingLeft="10"/>
+	</mx:HBox>
+	<mx:HBox verticalAlign="middle">
+	<s:Label text="Variable: "/>
+	<mx:ComboBox selectionColor="#CAE8E8" change="init();" selectedIndex="{selectedIndexSeaW}" id="riseSet">
+	<mx:dataProvider>
+	<mx:ArrayList>
+	<fx:Object label="Sea Water Salinity" value="sea_water_salinity" units="PSU"/>
+	<fx:Object label="Sea Water Temperature" value="sea_water_temperature" units="\u00b0C"/>
+	</mx:ArrayList>
+	</mx:dataProvider>
+	</mx:ComboBox>
+	</mx:HBox>
+	
 	</mx:VBox>
+	-->
+	
 </mx:Canvas>

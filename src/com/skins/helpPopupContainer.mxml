@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SkinnablePopUpContainer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+						   xmlns:s="library://ns.adobe.com/flex/spark" 
+						   xmlns:mx="library://ns.adobe.com/flex/mx"
+						   width="100%" height="100%" right="0" bottom="0" left="0" top="0" >
+			<!-- this is the backgound tinted box
+			backgroundColor="#000000" backgroundAlpha="0.32"-->
+			<fx:Script>
+				<![CDATA[
+					import spark.utils.TextFlowUtil;
+					XML.ignoreWhitespace = false;
+					
+					/* Trying a bunch of stuff to get the btn click to pass in variable helptext file.
+					import flash.net.URLLoader;
+					import flash.net.URLRequest;
+					
+					[Bindable] private var xml:XML;
+					[Bindable] private var urlRequest:URLRequest;
+					[Bindable] private var urlLoader:URLLoader;
+					
+					private function initg():void
+					{
+						urlRequest = new URLRequest("com/skins/helptxt.xml");
+						urlLoader = new URLLoader();
+						urlLoader.addEventListener(Event.COMPLETE, loadFile);
+						urlLoader.load(urlRequest);
+					}
+					private function loadFile(event:Event):void {
+						xml = new XML(event.target.data);
+						ta1.text = xml;
+						trace(ta1); 
+					} */
+					
+					/* 
+					[Bindable]
+					private var xmll:XML;
+					
+					private function initg():void {
+					var xmlLoader:URLLoader = new URLLoader();
+					xmlLoader.load(new URLRequest("{path}"));
+					xmlLoader.addEventListener(Event.COMPLETE, onXMLLoaded);
+					}
+					protected function onXMLLoaded(event:Event):void {
+						xmll = new XML(event.target.data);
+					} */
+				]]>
+			</fx:Script>
+	
+	<fx:Declarations>
+		<fx:XML id="textFlowAsXML" source="helptxt.xml" />
+		<!-- Can't get this to pass in the click as a variable path	
+		<fx:XML id="textFlowAsXML" source="path" />
+		-->
+	</fx:Declarations>
+	
+	<s:VGroup height="100%" right="200" top="15"
+			  horizontalAlign="center" verticalCenter="top"
+			  gap="20"><!--paddingTop="20" horizontalCenter="0" width="100%" -->
+		
+		
+		<s:Panel id="helpWindowPanel" title="INSTRUCTIONS" width="600" height="625" 
+				 skinClass="com.skins.helpPopupPanelLargeSkin">
+			
+		<s:Button styleName="btn-close" click="close();" buttonMode="true" top="-30" right="10" />
+			
+			
+			<s:TextArea id="ta1" styleName="ta-help-box-big" right="15" left="20" top="15" bottom="25" borderVisible="false"
+						textFlow="{TextFlowUtil.importFromXML(textFlowAsXML)}">
+			
+				<!-- SAMPLE FORMATTING
+				<s:textFlow>
+				<s:TextFlow id="tf_id" styleName="tf">
+					<s:p fontSize="20" fontWeight="bold">Title of the Page</s:p><s:br/>
+					<s:p><s:span fontWeight="bold">Last Stage: </s:span>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</s:p>
+					<s:p><s:span fontWeight="bold">First Stage: </s:span>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</s:p><s:br/>
+					<s:br/>
+					<s:p><s:span fontWeight="bold">Stage Duration: </s:span>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</s:p>
+					<s:div paddingLeft="20">
+					<s:p><s:span fontWeight="bold">User Defined Days: </s:span>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</s:p>
+					<s:p><s:span fontWeight="bold">Temperature Model: </s:span>Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat. Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</s:p>
+					<s:p><s:span fontStyle="italic">Upper: </s:span>Lorem ipsum dolor sit amet consectetuer adipiscing elit</s:p>					
+					<s:p><s:span fontStyle="italic">Lower: </s:span>Lorem ipsum dolor sit amet consectetuer adipiscing elit</s:p>
+					</s:div>
+				</s:TextFlow>
+			</s:textFlow>
+				-->
+		</s:TextArea>
+			
+		</s:Panel>
+	</s:VGroup>
+	
+</s:SkinnablePopUpContainer>

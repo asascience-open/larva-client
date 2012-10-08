@@ -1,52 +1,299 @@
 @namespace s "library://ns.adobe.com/flex/spark";
 @namespace esri "http://www.esri.com/2008/ags";
 @namespace mx "library://ns.adobe.com/flex/mx";
+@namespace classes "com.classes.*";
+@namespace symbols "com.esri.ags.symbols.*";
+@namespace cl "com.classes.*";
+
+/* ////////////////////////////////////////////////////////////////////////////////// */
+/* COLORS
+#C6DBEF base: main light blue background speced in header of most files
+#022739 dark blue-black, topmost utility bar
+#001A69 navy blue, top band
+#8BBCE8 diel and tax boxes (speced in header) 
+#EBF4FF light blue for tab nav
+#CF0000 bright red
+#FBE35F datagrid bkgd color: selected
+
+/* Font Squirrel (http://www.fontsquirrel.com) */
+@font-face {
+	fontFamily:PTSansRegular;
+	src:url("assets/PTS55F-webfont.ttf");
+	embedAsCFF: true;
+}
+@font-face {
+	fontFamily:PTSansBold;
+	src:url("assets/PTS75F-webfont.ttf");
+	embedAsCFF: true;
+}
+@font-face {
+	fontFamily:PTSansNarrowRegular;
+	src:url("assets/PTN57F-webfont.ttf");
+	embedAsCFF: true;
+}
+@font-face {
+	fontFamily:PTSansNarrowBold;
+	src:url("assets/PTN77F-webfont.ttf");
+	embedAsCFF: true;
+}
+
+/* SAME FONT SET, BUT FOR MX COMPONENTS THAT DO NOT WORK WITH CFF */
+@font-face {
+	fontFamily:PTSansRegularMX;
+	src:url("assets/PTS55F-webfont.ttf");
+	embedAsCFF: false;
+}
+@font-face {
+	fontFamily:PTSansBoldMX;
+	src:url("assets/PTS75F-webfont.ttf");
+	advancedAntiAliasing: true; 
+	embedAsCFF: false; 
+} 
+@font-face {
+	fontFamily:PTSansNarrowRegularMX;
+	src:url("assets/PTN57F-webfont.ttf");
+	embedAsCFF: false;
+}
+@font-face {
+	fontFamily:PTSansNarrowBoldMX;
+	src:url("assets/PTN77F-webfont.ttf");
+	embedAsCFF: false;
+}
+
+
+global {
+	font-family: Arial;
+}
 
 esri|Navigation
 {
 	skinClass: ClassReference("com.skins.slider");
 }
-mx|ToolTip {
+/*mx|ToolTip {
 	backgroundAlpha: .9;
 	cornerRadius: 5;
 	fontSize:14;
 	color:black;
 	backgroundColor:black;
 	borderStyle:none;
+}*/
+
+mx|ToggleButtonBar {
+	color: #000000;
+	font-size:16;
+	font-weight:bold;
+	selectedButtonTextStyleName:"mySelectedButtonTextStyleName";
 }
+.mySelectedButtonTextStyleName {
+	color: #f2f2f2;
+}
+
 mx|TabNavigator {
-	cornerRadius: 0;
+	cornerRadius:0;
 	tabStyleName: "MyTabs";
 	firstTabStyleName: "MyFirstTab";
 	lastTabStyleName: "MyLastTab";
 	selectedTabTextStyleName: "MySelectedTab";
 }
-mx|ToggleButtonBar{
-	selectedButtonTextStyleName:"mySelectedButtonTextStyleName";
-}
-.mySelectedButtonTextStyleName {
-	color: #FF3333;
-	font-weight:bold;
-}
-
 .MyTabs {
-	cornerRadius: 0;
-	color: black;
-	fontSize: 16;
+/*  cornerRadius: 0; */
+	color:#444444;
+	font-size: 14;
 }
-
 .MyFirstTab,
 .MyLastTab {
-	cornerRadius: 0;
-	color: black;
-	fontSize: 16;
-	fontWeight: normal;
+	color:#444444;
+	font-size: 14;
+/*  cornerRadius: 0; */
+/*	color: black;
+	fontSize: 15;
+	fontWeight: normal;*/
 }
 
 .MySelectedTab {
-	cornerRadius: 0;
-	fontWeight: bold;
-	color: black;
-	fontSize: 17;
-	textRollOverColor: #336699;
+/*  cornerRadius: 0; */
+/*	color: black;
+	fontSize: 15;*/
+	font-size: 14;
+	color:#CF0000;
+/*	textRollOverColor: #336699;*/
 }
+
+
+
+
+
+/* TOP UTILITY BAR AND TOP HEADER BAND AREA */
+.appTitle {
+	color:#ffffff;
+	font-family:PTSansRegular;
+	font-size:40;
+}
+.loginUser {
+	color:#cccccc;
+	font-size:11;
+	right:40;
+	padding-top:6;
+	padding-bottom:4;
+	padding-right:10;
+}
+.exitApp {
+	font-weight:bold;
+	font-size:13;
+	color:#999999;
+	rollOverColor:#C6DBEF;
+	selectionColor:#555555;
+	textRollOverColor:#777777;
+	textSelectedColor:#ffffff;
+	cornerRadius:3;
+}
+
+
+	
+/* PAGE TEMPLATED STUFF */
+.pageTitles {
+	font-family:PTSansBold;
+	/*font-weight:bold;*/
+	font-size:24;
+	color:#022739;
+	padding-bottom:5;
+	padding-top:15;
+}
+	
+.msg-action {
+	font-family:PTSansBold;
+	/*font-weight:bold;*/
+	font-size:17;
+	color:#CF0000;
+	padding-top:5;
+}	
+	.msg-error {
+		color:#FF3333;
+		font-family:PTSansBold;
+		/*font-weight:bold;*/
+	}
+
+.section-titles {
+	font-family:PTSansBold;
+	/*font-weight:bold;*/
+	font-size:14;
+	color:#001A69;
+	padding-bottom:5;
+}
+.section-titles-h3 {
+	font-size:12;
+	font-weight:bold;
+}
+.selected-label {
+	font-family:PTSansRegular;
+	font-size:14;
+	color:#555555;
+}
+.selected-larva {
+	font-family:PTSansBold;
+	font-size:20;
+	color:#CF0000;
+	padding-left:-2;
+	padding-right:7;
+}
+/* Edit Behavior mini-box titles: Diel 1, 2, Taxis 1, 2 */
+.small-box-titles {
+	font-family:PTSansBold;
+	/*font-weight:bold;*/
+	font-size:14;
+	display:block;
+	height:25;
+	color:#ffffff;
+	padding-top:10;
+	padding-left:10;
+	padding-bottom:5;
+}
+
+
+
+/* FORMS */
+mx|FormItem, mx|NumericStepper, mx|DateField, cl|NumberInput, 
+mx|FormItem classes|NumberInput, mx|ComboBox#plusMin {
+	text-align:center;
+	font-weight:bold;
+}	
+mx|ComboBox, mx|FormItem mx|ComboBox {
+	text-align:left;
+	font-weight:bold;
+}
+.form-labels {
+	font-weight:normal;
+}
+.form-labels-exception {
+	font-weight:bold;
+}
+/* the measurements that come after the input box */
+.form-measures {
+	font-weight:normal;
+	color:#777777;
+}
+	
+
+/* DATA GRID */	
+.dataGridText {
+	font-family:Arial Narrow, Arial;
+	font-size:11;
+	selectionColor:#FBE35F;
+}
+
+	
+/* BUTTONS */	
+s|Button {
+	font-weight:bold;
+	font-size:13;
+	
+/*	color:#222222;*/
+/*  chrome-color:#cccccc; */
+}
+s|Button:over {
+	background-color:#00ff00;
+}
+/* odd: padding and height are not sticking */
+s|Button#goBack {
+	color:#777777;
+}
+s|Button#goButt {
+	font-weight:bold;
+	color:#CF0000;
+}
+
+.btn-login { 
+	font-weight:bold;
+	fontSize: 22; 
+	color:#CF0000;
+}
+s|Button.btn-help {
+	skinClass: ClassReference("com.skins.helpButton");
+}
+s|Button.btn-close {
+	skinClass: ClassReference("com.skins.closeButton");
+}
+
+/* Big TextArea box for the popup help windows */
+.ta-help-box-big {
+	line-height:16;
+	padding-top:10;
+	padding-bottom:10;
+	padding-left:10;
+	padding-right:15;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

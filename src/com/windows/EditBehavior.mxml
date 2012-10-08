@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
-		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF"   xmlns:cl="com.classes.*"
-		   xmlns:mx="library://ns.adobe.com/flex/mx" >
+<mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		   xmlns:s="library://ns.adobe.com/flex/spark"    
+		   xmlns:cl="com.classes.*"
+		   xmlns:mx="library://ns.adobe.com/flex/mx" 
+		   width="100%" height="100%" backgroundColor="0xC6DBEF" creationComplete="init()">
 	<fx:Script>
 		<![CDATA[
 			import com.classes.*;
 			import com.skins.ToolTipSkin;
-			
+			import com.skins.largeButtons;
+			import com.skins.helpPopupContainer;
+			import mx.managers.PopUpManager;
 			import mx.controls.Alert;
 			import mx.events.ToolTipEvent;
 			import mx.rpc.events.FaultEvent;
@@ -152,33 +156,99 @@
 				ptt.text = title;
 				event.toolTip = ptt;
 			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				//this is the size of the full popup's container background
+				var instructions:helpPopupContainer = new helpPopupContainer();
+				instructions.open(this, true);
+				instructions.width = stage.width;
+				instructions.height = stage.height;
+				
+				PopUpManager.centerPopUp(instructions);
+			}
 		]]>
 	</fx:Script>
 	
 	<fx:Declarations>
 	</fx:Declarations>
+	<s:Button styleName="btn-help" buttonMode="true" click="button1_clickHandler(event)" right="40" top="20"/>
+	
+	<s:VGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="top" paddingTop="5"  paddingRight="25" paddingLeft="25">
+		
+		<s:Label text="Edit Behavior" styleName="pageTitles" />
+		
+		<!-- remove this if you want to stack vertically -->
+		<mx:HRule width="100%"/>
+		
+		<!-- centers content, then set left to 0 to contrain it left -->
+		<s:HGroup width="100%" horizontalAlign="left" minHeight="550">
+			<s:VGroup height="100%" width="100%">
+				
+				<s:HGroup verticalAlign="baseline" width="100%" horizontalAlign="center">
+				<s:Label text="" styleName="msg-action"/>
+				
+					<s:Label text="Genus:" 				styleName="selected-label" />
+					<s:Label id="bGenus" 				styleName="selected-larva" />
+					<s:Label text="/   Species:" 		styleName="selected-label" />
+					<s:Label id="bSpecies" 				styleName="selected-larva" />
+					<s:Label text="/   Common Name:" 	styleName="selected-label" />
+					<s:Label id="bCommon" 				styleName="selected-larva" />
+				</s:HGroup>
+
+				<s:HGroup visible="true" verticalAlign="top" horizontalAlign="center" width="100%" height="100%">
+					<mx:TabNavigator id="tabStage" resizeToContent="true" tabHeight="28" 
+									 borderStyle="solid" borderAlpha="0.5" paddingBottom="10" 
+									 width="100%" minHeight="513" backgroundColor="#EBF4FF" />
+				</s:HGroup>
+				
+			</s:VGroup>
+		</s:HGroup>	
+		
+		<s:HGroup verticalAlign="middle" horizontalAlign="right" width="100%" height="40" paddingTop="20" paddingRight="120">
+			<s:Button id="goBack" label="&lt; PREVIOUS" height="40" width="140" toolTipCreate="createCustomTip('', event)" toolTip="Go Back" click="back()"/>
+			<s:Button id="goButt" label="NEXT STEP &gt;" height="40" width="140" toolTipCreate="createCustomTip('', event)" toolTip="Go to Forcing Page" click="runModel()"
+					  skinClass="com.skins.largeButtons"/>
+		</s:HGroup>
+
+</s:VGroup>	
+	
+	<!--<s:Rect left="0" right="0" top="0" bottom="0">
+	<s:fill>
+	<s:SolidColor color="0xffffFF" />
+	</s:fill>
+	</s:Rect>-->
+	
+<!-- ORIGINAL
 	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
-		<s:Label text="Edit Behavior" fontSize="20"  paddingTop="5" fontWeight="bold"/>		
-		<mx:HRule width="100%"/>
-			<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
-				<!--<mx:Label fontWeight="bold" fontSize="15" text="Name:" />
-				<mx:Label fontWeight="bold" id="bName"  fontSize="14"  color="#FFFFFF"/>-->
-				<mx:Label fontWeight="bold" fontSize="15" text="Genus:" />
-				<mx:Label fontWeight="bold" id="bGenus"  fontSize="14" color="#FFFFFF" />
-				<mx:Label fontWeight="bold" fontSize="15" text="Species:" />
-				<mx:Label  fontWeight="bold" id="bSpecies"  fontSize="14"  color="#FFFFFF"/>
-				<mx:Label fontWeight="bold"  fontSize="15" text="Common Name:" />
-				<mx:Label fontWeight="bold" id="bCommon"  fontSize="14" color="#FFFFFF"/>
+	<s:Label text="Edit Behavior" fontSize="20"  paddingTop="5" fontWeight="bold"/>		
+	<mx:HRule width="100%"/>
+	<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
+	<!-/-<mx:Label fontWeight="bold" fontSize="15" text="Name:" />
+	<mx:Label fontWeight="bold" id="bName"  fontSize="14"  color="#FFFFFF"/>-/->
+	<mx:Label fontWeight="bold" fontSize="15" text="Genus:" />
+	<mx:Label fontWeight="bold" id="bGenus"  fontSize="14" color="#FFFFFF" />
+	
+	<mx:Label fontWeight="bold" fontSize="15" text="Species:" />
+	<mx:Label  fontWeight="bold" id="bSpecies"  fontSize="14"  color="#FFFFFF"/>
+	
+	<mx:Label fontWeight="bold"  fontSize="15" text="Common Name:" />
+	<mx:Label fontWeight="bold" id="bCommon"  fontSize="14" color="#FFFFFF"/>
 			</mx:HBox>
-		<mx:HRule width="100%"/>
-		<mx:HBox verticalAlign="middle" visible="true" backgroundColor="0xC6DBEF"   horizontalAlign="center" width="100%" height="100%" paddingTop="0" paddingBottom="0">
-			<mx:TabNavigator resizeToContent="true" tabHeight="28" paddingTop="0" borderStyle="none" backgroundColor="0xC6DBEF"   verticalGap="0" fontWeight="bold" id="tabStage" width="85%" height="100%"/>
-		</mx:HBox>
-		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="100%" height="36" paddingTop="2" paddingBottom="3">
-			<s:Button fontWeight="bold" toolTipCreate="createCustomTip('', event)" fontSize="14" label="Choose Different Behavior" id="goBack" toolTip="Go Back" click="back()"/>
-			<s:Button fontWeight="bold" toolTipCreate="createCustomTip('', event)" fontSize="14" label="Next Step" id="goButt" toolTip="Go to Forcing Page" click="runModel()"/>
-			<!--<s:Button fontWeight="bold" fontSize="14" label="Save Edits" id="saveButt" toolTip="Save Edits" click="saveStages()"/>
-			<s:Label id="statusSave" fontWeight="bold" color="#FF3333"/>-->
-		</mx:HBox>
+	<mx:HRule width="100%"/>
+	<mx:HBox verticalAlign="middle" visible="true" backgroundColor="0xC6DBEF"   horizontalAlign="center" width="100%" height="100%" paddingTop="0" paddingBottom="0">
+		<mx:TabNavigator resizeToContent="true" tabHeight="28" paddingTop="0" borderStyle="none" backgroundColor="0xC6DBEF"   verticalGap="0" fontWeight="bold" id="tabStage" width="85%" height="100%"/>
+	</mx:HBox>
+	<mx:HBox verticalAlign="middle" horizontalAlign="center" width="100%" height="36" paddingTop="2" paddingBottom="3">
+		<s:Button fontWeight="bold" toolTipCreate="createCustomTip('', event)" fontSize="14" label="Choose Different Behavior" id="goBack" toolTip="Go Back" click="back()"/>
+		<s:Button fontWeight="bold" toolTipCreate="createCustomTip('', event)" fontSize="14" label="Next Step" id="goButt" toolTip="Go to Forcing Page" click="runModel()"/>
+		<!-/-<s:Button fontWeight="bold" fontSize="14" label="Save Edits" id="saveButt" toolTip="Save Edits" click="saveStages()"/>
+		<s:Label id="statusSave" fontWeight="bold" color="#FF3333"/>-/->
+	</mx:HBox>
 	</mx:VBox>
+	-->
+	
+	
+	
+	
 </mx:Canvas>

@@ -2,6 +2,7 @@
 <mx:Canvas xmlns:fx="http://ns.adobe.com/mxml/2009" width="100%" height="100%" creationComplete="init()"
 		   xmlns:s="library://ns.adobe.com/flex/spark" backgroundColor="0xC6DBEF" 
 		   xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:esri="http://www.esri.com/2008/ags" xmlns:classes="com.classes.*" xmlns:symbols="com.esri.ags.symbols.*" >
+	
 	<fx:Script>
 		<![CDATA[
 			import com.classes.AppEvent;
@@ -17,7 +18,10 @@
 			import com.esri.ags.utils.JSONUtil;
 			import com.esri.ags.utils.WebMercatorUtil;
 			import com.skins.ToolTipSkin;
-			
+			import com.skins.helpButton;
+			import com.skins.largeButtons;
+			import com.skins.helpPopupContainer;
+			import mx.managers.PopUpManager;
 			import mx.controls.Alert;
 			import mx.events.ToolTipEvent;
 			import mx.rpc.events.FaultEvent;
@@ -33,6 +37,8 @@
 			[Bindable]
 			public var behavior:String = new String;
 			[Bindable]
+			public var behaviorid:String = new String;
+			[Bindable]
 			public var datasetCurrents:String = new String;
 			[Bindable]
 			public var urlStr:String = new String;
@@ -40,6 +46,10 @@
 			public var backgroundMapU:String = "";
 			[Bindable]
 			public var forcingDomain:GraphicsLayer = new GraphicsLayer;
+			[Bindable]
+			public var modelrunsURL:String = new String;
+			[Bindable]
+			public var forcingURL:String = new String;
 			
 			private var spatRef:SpatialReference = new SpatialReference(4326);
 			private var spatRefWM:SpatialReference = new SpatialReference(102100);
@@ -71,7 +81,7 @@
 				goButt.enabled = true;
 				//check to see if the point connects with forcing Extent
 				if(Extent(forcingDomain.graphicProvider[0].geometry.extent).contains(event.graphic.geometry) == false){
-					error.text = "Outside Forcing Domain";
+					error.text = "! Outside Forcing Domain. Click inside box.";
 				}
 				else{
 					error.text = "";
@@ -117,7 +127,8 @@
 				function runCompleteHandler(event:ResultEvent):void
 				{
 					var rsult:Object = JSON.parse(event.result.toString());
-					Alert.show("Your Model has Started.  Check the Models page to view Status.", "Model Notify");
+					//Alert.show("Your Model has Started.  Check the Models page to view Status.", "Model Notify");
+
 					//Alert.show(rsult.results, "Model Update");
 					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
 				}
@@ -126,6 +137,10 @@
 					Alert.show(event.toString(),"Model Update - Fail?");
 					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
 				}
+				var object:Object = new Object();
+				object["step"] = "status";
+				object["id"] = modelrunsURL;
+				AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
 			}
 			
 			private function createCustomTip(title:String, event:ToolTipEvent):void {
@@ -134,6 +149,17 @@
 				ptt.text = title;
 				event.toolTip = ptt;
 			}
+			
+			protected function button1_clickHandler(event:MouseEvent):void
+			{
+				//this is the size of the full popup's container background
+				var instructions:helpPopupContainer = new helpPopupContainer();
+				instructions.open(this, true);
+				instructions.width = stage.width;
+				instructions.height = stage.height;
+				
+				PopUpManager.centerPopUp(instructions);
+			}
 		]]>
 	</fx:Script>
 	
@@ -141,61 +167,170 @@
 		<symbols:PictureMarkerSymbol id="pt" source="@Embed('assets/images/SpillSite_glow.png')"/>
 		<esri:DrawTool id="dt" map="{map}" drawEnd="pointDrop(event)" />
 	</fx:Declarations>
-	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
-		<s:Label text="Run Model" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
+	<s:Button styleName="btn-help" buttonMode="true" click="button1_clickHandler(event)" right="40" top="20"/>
+	
+	<s:VGroup width="100%" height="100%" horizontalAlign="center" paddingTop="5" paddingRight="25" paddingLeft="25" >
+		
+		<s:Label text="Run Model" styleName="pageTitles" />
+		
+		<!-- remove this if you want to stack vertically -->
 		<mx:HRule width="100%"/>
-			<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
-				<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
-					<mx:Label fontWeight="bold"  fontSize="13" text="Start Date:" />
-					<mx:DateField id="starDate" selectedDate="{defaultDate}" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelDate}"/>
-					<mx:Label fontWeight="bold" fontSize="13" text="Duration:" />
-					<mx:NumericStepper fontWeight="bold" id="dur" minimum="1" maximum="100" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.duration}"/>
-					<s:Label text="days" color="white" fontWeight="bold" fontSize="12"/>
-					<!--<mx:ComboBox selectionColor="#CAE8E8" paddingLeft="0" id="durUnits" dataProvider="['days','months']" />-->
-					<mx:Label fontWeight="bold" fontSize="13" text="Time Step:" />
-					<mx:NumericStepper fontWeight="bold" toolTip="{tooltips.modelStepper}" toolTipCreate="createCustomTip('', event)" id="timeSte" value="60" maximum="1000" minimum="10"/>
-					<s:Label text="minutes" color="white" fontWeight="bold" fontSize="12"/>
-					<mx:ComboBox selectionColor="#CAE8E8" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.interp}" id="methodT" >
-						<mx:dataProvider>
-							<mx:ArrayList>
-								<fx:Object label="Use Linear Interpolation" value="interp"/>
-								<fx:Object label="Use Nearest Timestep" value="nearest"/>
-							</mx:ArrayList>
-						</mx:dataProvider>
-					</mx:ComboBox>
+		
+		<!-- centers content, then set left to 0 to contrains it left -->
+		<s:HGroup width="100%" horizontalAlign="center" minHeight="550">
+			
+			<!-- LEFT COLUMN -->
+			<s:VGroup height="100%" width="35%" horizontalAlign="left" paddingTop="5">
+				
+				<s:Label text="Choose Model Items" styleName="msg-action"/>
+				
+				<s:VGroup gap="40" paddingLeft="-5">
+					<mx:Form width="100%" >
+						<!-- mx:FormHeading label="Group 1"/ -->
+						<mx:FormItem label="Start Date:" styleName="form-labels">
+							<mx:DateField id="starDate" selectedDate="{defaultDate}" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelDate}" width="100"/>
+						</mx:FormItem>
+						
+						<mx:FormItem label="Duration:" styleName="form-labels">
+						<s:HGroup verticalAlign="baseline">
+							<mx:NumericStepper id="dur" minimum="1" maximum="100" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.duration}" width="75"/>
+							<mx:Label text="days" styleName="form-measures" />
+							<!--<s:Button styleName="btn-help" click="alertDB.open(this, true);" buttonMode="true" />-->
+						</s:HGroup>
+						</mx:FormItem>						
+						
+						<mx:FormItem label="Time Step:" styleName="form-labels">
+						<s:HGroup verticalAlign="baseline">
+							<mx:NumericStepper id="timeSte" value="60" maximum="1000" minimum="10" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelStepper}" width="75"/>
+							<mx:Label text="minutes" styleName="form-measures" />
+						</s:HGroup>
+						</mx:FormItem>
+					
+						<mx:FormItem label="Method:" styleName="form-labels">
+						<mx:ComboBox selectionColor="#CAE8E8" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.interp}" id="methodT" height="25" paddingBottom="2" >
+							<mx:dataProvider>
+								<mx:ArrayList>
+									<fx:Object label="Use Linear Interpolation" value="interp"/>
+									<fx:Object label="Use Nearest Timestep" value="nearest"/>
+								</mx:ArrayList>
+							</mx:dataProvider>
+						</mx:ComboBox>
+						</mx:FormItem>
+						
+						<s:Spacer height="10"/>
+						<mx:HRule height="1" width="100%" />			
+						<s:Spacer height="10"/>
+						
+						<mx:FormItem label="Particles:" styleName="form-labels">
+						<mx:NumericStepper minimum="1" toolTip="{tooltips.particles}" toolTipCreate="createCustomTip('', event)" maximum="1000" id="parts" width="75"/>
+						</mx:FormItem>
+						
+						<mx:FormItem label="Release Depth:" styleName="form-labels">
+						<s:HGroup verticalAlign="baseline">
+							<classes:NumberInput width="57" text="0" fractionalDigits="5" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.depthT}" id="depthVal"/>
+							<mx:Label text="meters" styleName="form-measures" />
+						</s:HGroup>
+						</mx:FormItem>
+						
+						<mx:FormItem label="Horizontal Dispersion:" styleName="form-labels">
+						<s:HGroup verticalAlign="baseline">
+							<classes:NumberInput width="57" text="0.0" toolTip="{tooltips.hDisp}" toolTipCreate="createCustomTip('', event)" fractionalDigits="5" id="horiDisp"/>
+							<mx:Label text="m/s" styleName="form-measures" />
+						</s:HGroup>
+						</mx:FormItem>
+						
+						<mx:FormItem label="Vertical Dispersion:" styleName="form-labels">
+							<s:HGroup verticalAlign="baseline">
+								<classes:NumberInput width="57" text="0.0" toolTip="{tooltips.vDisp}" toolTipCreate="createCustomTip('', event)" fractionalDigits="5" id="vertDis"/>
+								<mx:Label text="m/s" styleName="form-measures" />
+							</s:HGroup>
+						</mx:FormItem>						
+					</mx:Form>
+				</s:VGroup>
+				
+			</s:VGroup>
+			<!-- / END - LEFT COLUMN -->
+			
+			<!-- RIGHT COLUMN -->
+			<s:VGroup height="100%" width="65%" right="0" paddingTop="5">
+				<s:HGroup verticalAlign="baseline" >
+					<s:Label text="Select a point on Map" styleName="msg-action"/>
+					<s:Label text="Showing Forcing Domain on map" />
+				</s:HGroup>
+				<esri:Map id="map" width="100%" height="100%" minHeight="500" 
+						  wrapAround180="true" scaleBarVisible="false" logoVisible="false" level="6" zoomSliderVisible="true" />		
+				
+				<s:HGroup verticalAlign="middle" horizontalAlign="right" width="100%" height="40" paddingTop="20" paddingRight="120">
+					<s:Label  id="error" styleName="msg-error"/>
+					<!--<s:Button id="goBack" label="&lt; PREVIOUS" height="40" width="140" toolTipCreate="createCustomTip('', event)" toolTip="Go Back" click="back()"/>-->
+					<s:Button id="goButt" label="RUN MODEL &gt;" enabled="false" click="runModel()" 
+							  toolTipCreate="createCustomTip('', event)"  toolTip="Run Model" height="40" width="140" 
+							  skinClass="com.skins.largeButtons"/>
+				</s:HGroup>
+			</s:VGroup>
+			<!-- / END - RIGHT COLUMN -->
+		</s:HGroup>	
+	</s:VGroup>
+	
+	
+	<!-- ORIGINAL
+	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
+	<s:Label text="Run Model" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
+	<mx:HRule width="100%"/>
+	
+	<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
+	<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
+	<mx:Label fontWeight="bold"  fontSize="13" text="Start Date:" />
+	<mx:DateField id="starDate" selectedDate="{defaultDate}" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelDate}"/>
+	<mx:Label fontWeight="bold" fontSize="13" text="Duration:" />
+	<mx:NumericStepper fontWeight="bold" id="dur" minimum="1" maximum="100" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.duration}"/>
+	<s:Label text="days" color="white" fontWeight="bold" fontSize="12"/>
+	<!/-<mx:ComboBox selectionColor="#CAE8E8" paddingLeft="0" id="durUnits" dataProvider="['days','months']" />/->
+	<mx:Label fontWeight="bold" fontSize="13" text="Time Step:" />
+	<mx:NumericStepper fontWeight="bold" toolTip="{tooltips.modelStepper}" toolTipCreate="createCustomTip('', event)" id="timeSte" value="60" maximum="1000" minimum="10"/>
+	<s:Label text="minutes" color="white" fontWeight="bold" fontSize="12"/>
+	<mx:ComboBox selectionColor="#CAE8E8" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.interp}" id="methodT" >
+		<mx:dataProvider>
+			<mx:ArrayList>
+				<fx:Object label="Use Linear Interpolation" value="interp"/>
+				<fx:Object label="Use Nearest Timestep" value="nearest"/>
+			</mx:ArrayList>
+		</mx:dataProvider>
+	</mx:ComboBox>
 				</mx:HBox>
 			</mx:HBox>
-		<mx:HRule width="100%"/>
-		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
-			<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
-				<mx:Label fontWeight="bold" fontSize="13" text="Particles:" />
-				<mx:NumericStepper fontWeight="bold" minimum="1" toolTip="{tooltips.particles}" toolTipCreate="createCustomTip('', event)" maximum="1000" id="parts"  />
-				<mx:Label fontWeight="bold" fontSize="13" text="Release Depth:" />
-				<classes:NumberInput width="60" text="0" fractionalDigits="5" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.depthT}" id="depthVal"/>
-				<s:Label text="Meters" color="white" fontWeight="bold" toolTip="{tooltips.depthT}" fontSize="12"/>
-				<mx:Label fontWeight="bold"  fontSize="13" text="Horizontal Dispersion:" />
-				<classes:NumberInput width="60" text="0.0" toolTip="{tooltips.hDisp}" toolTipCreate="createCustomTip('', event)" fractionalDigits="5" id="horiDisp"/>
-				<s:Label text="m/s" color="white" fontWeight="bold" fontSize="12"/>
-				<mx:Label fontWeight="bold" fontSize="13" text="Vertical Dispersion:" />
-				<classes:NumberInput width="60" toolTip="{tooltips.vDisp}" text="0.0" toolTipCreate="createCustomTip('', event)" fractionalDigits="5" id="vertDis"/>
-				<s:Label text="m/s" color="white" fontWeight="bold" fontSize="12"/>
-			</mx:HBox>
+	<mx:HRule width="100%"/>
+	<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
+		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
+			<mx:Label fontWeight="bold" fontSize="13" text="Particles:" />
+			<mx:NumericStepper fontWeight="bold" minimum="1" toolTip="{tooltips.particles}" toolTipCreate="createCustomTip('', event)" maximum="1000" id="parts"  />
+			<mx:Label fontWeight="bold" fontSize="13" text="Release Depth:" />
+			<classes:NumberInput width="60" text="0" fractionalDigits="5" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.depthT}" id="depthVal"/>
+			<s:Label text="Meters" color="white" fontWeight="bold" toolTip="{tooltips.depthT}" fontSize="12"/>
+			<mx:Label fontWeight="bold"  fontSize="13" text="Horizontal Dispersion:" />
+			<classes:NumberInput width="60" text="0.0" toolTip="{tooltips.hDisp}" toolTipCreate="createCustomTip('', event)" fractionalDigits="5" id="horiDisp"/>
+			<s:Label text="m/s" color="white" fontWeight="bold" fontSize="12"/>
+			<mx:Label fontWeight="bold" fontSize="13" text="Vertical Dispersion:" />
+			<classes:NumberInput width="60" toolTip="{tooltips.vDisp}" text="0.0" toolTipCreate="createCustomTip('', event)" fractionalDigits="5" id="vertDis"/>
+			<s:Label text="m/s" color="white" fontWeight="bold" fontSize="12"/>
 		</mx:HBox>
-		<mx:HRule width="100%"/>
-		<mx:HBox verticalAlign="middle" width="85%">
-			<mx:VBox horizontalAlign="center">
-				<mx:Label paddingBottom="40" fontWeight="bold" paddingLeft="0" fontSize="14" text="Select a point on Map" toolTip="Run Model Steps" />
-				<mx:Label paddingLeft="0" fontSize="12" fontWeight="bold" text="Showing"  />
-				<mx:Label paddingLeft="0" fontSize="12" text="Forcing domain" />
-				<mx:Label paddingLeft="0" fontSize="12" text="on map" />
-			</mx:VBox>
-			<esri:Map id="map" wrapAround180="true" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" height="310" />
-		</mx:HBox>
-		<mx:HRule width="100%"/>
-		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="100%" height="35" paddingTop="3" paddingBottom="3">
-			<!--<s:Button fontWeight="bold" fontSize="14" label="Back" id="goBack" toolTip="Go Back" click="{dt.activate(DrawTool.MAPPOINT)}" />-->
-			<s:Label color="#FF3333" fontWeight="bold" id="error"/>
-			<s:Button fontWeight="bold" fontSize="14" label="Run Model" enabled="false" id="goButt" toolTip="Run Model" toolTipCreate="createCustomTip('', event)" click="runModel()"/>
-		</mx:HBox>
+	</mx:HBox>
+	<mx:HRule width="100%"/>
+	<mx:HBox verticalAlign="middle" width="85%">
+		<mx:VBox horizontalAlign="center">
+			<mx:Label paddingBottom="40" fontWeight="bold" paddingLeft="0" fontSize="14" text="Select a point on Map" toolTip="Run Model Steps" />
+			<mx:Label paddingLeft="0" fontSize="12" fontWeight="bold" text="Showing"  />
+			<mx:Label paddingLeft="0" fontSize="12" text="Forcing domain" />
+			<mx:Label paddingLeft="0" fontSize="12" text="on map" />
+		</mx:VBox>
+		<esri:Map id="map" wrapAround180="true" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" height="310" />
+	</mx:HBox>
+	<mx:HRule width="100%"/>
+	<mx:HBox verticalAlign="middle" horizontalAlign="center" width="100%" height="35" paddingTop="3" paddingBottom="3">
+		<!/-<s:Button fontWeight="bold" fontSize="14" label="Back" id="goBack" toolTip="Go Back" click="{dt.activate(DrawTool.MAPPOINT)}" />->
+		<s:Label color="#FF3333" fontWeight="bold" id="error"/>
+		<s:Button fontWeight="bold" fontSize="14" label="Run Model" enabled="false" id="goButt" toolTip="Run Model" toolTipCreate="createCustomTip('', event)" click="runModel()"/>
+	</mx:HBox>
 	</mx:VBox>
+	-->
 </mx:Canvas>
