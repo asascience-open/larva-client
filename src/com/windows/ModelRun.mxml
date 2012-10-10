@@ -18,12 +18,12 @@
 			import com.esri.ags.utils.JSONUtil;
 			import com.esri.ags.utils.WebMercatorUtil;
 			import com.skins.ToolTipSkin;
-			import com.skins.helpButton;
-			import com.skins.largeButtons;
 			import com.skins.helpPopupContainer;
-			import mx.managers.PopUpManager;
+			import com.skins.largeButtons;
+			
 			import mx.controls.Alert;
 			import mx.events.ToolTipEvent;
+			import mx.managers.PopUpManager;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
 			import mx.rpc.http.HTTPService;
@@ -50,6 +50,10 @@
 			public var modelrunsURL:String = new String;
 			[Bindable]
 			public var forcingURL:String = new String;
+			[Bindable]
+			public var sDate:Date = new Date;
+			[Bindable]
+			public var eDate:Date = new Date;
 			
 			private var spatRef:SpatialReference = new SpatialReference(4326);
 			private var spatRefWM:SpatialReference = new SpatialReference(102100);
@@ -59,16 +63,25 @@
 			private function init():void
 			{
 				var backgroundMap:ArcGISTiledMapServiceLayer = new ArcGISTiledMapServiceLayer(backgroundMapU);
+				map.removeAllLayers();
 				map.addLayer(backgroundMap);
 				map.addLayer(forcingDomain);
 				map.extent = forcingDomain.graphicProvider[0].geometry.extent;
-				map.zoomIn();
+				//map.zoomIn();
 				dt.markerSymbol = pt;
 				dt.activate(DrawTool.MAPPOINT);
 				AppEvent.addListener(AppEvent.EXIT_APP, exitApp);
+				AppEvent.addListener(AppEvent.SET_APP_STATUS, enterAgain);
 				var tempDate:Date = new Date();
 				defaultDate = new Date(tempDate.getFullYear(),tempDate.getMonth(),tempDate.getDate()-5);
 			}
+			
+			private function enterAgain(event:AppEvent):void{
+				if(event.data.step == "model"){
+					init();
+				}
+			}
+			
 			private function pointDrop(event:DrawEvent):void
 			{
 				map.removeLayer(map.getLayer("target"));
@@ -93,54 +106,64 @@
 			}
 			private function runModel():void
 			{
-				AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
-				//convert to geographic coords
-				var webmercpt:MapPoint = WebMercatorUtil.webMercatorToGeographic(gr.geometry) as MapPoint;
-				
-				var modelObject:Object = new Object;
-				modelObject["hydro_path"] = datasetCurrents; 
-				modelObject["duration"] = dur.value;
-				modelObject["email"] = emailStr; 
-				modelObject["geometry"] = "POINT ("+webmercpt.x+" "+webmercpt.y+")";//"POINT (-147 60.75)"; 
-				//modelObject["horiz_chunk"] = 2; 
-				modelObject["horiz_dispersion"] = Number(horiDisp.text); 
-				modelObject["behavior"] = urlStr+behavior +".json";
-				modelObject["particles"] = parts.value;
-				modelObject["release_depth"] = Number(depthVal.text);
-				modelObject["start"] = starDate.selectedDate.time; 
-				modelObject["time_chunk"] = 2;
-				modelObject["timestep"] = timeSte.value*60;
-				modelObject["vert_dispersion"] = Number(vertDis.text);
-				modelObject["time_method"] =methodT.selectedItem.value;
-				
-				var modelurlService:HTTPService = new HTTPService;
-				modelurlService.url = modelstr;
-				modelurlService.method = "POST";
-				modelurlService.addEventListener(ResultEvent.RESULT,runCompleteHandler);
-				modelurlService.addEventListener(FaultEvent.FAULT,loadErrorHandler);
-				
-				//convert to JSON
-				var json:Object = new Object;
-				json["config"] = JSONUtil.encode(modelObject);
-				modelurlService.send(json);	
-				// Status:  http://localhost:4001/runs/5040fffa963cfb31d865885e/status.json
-				function runCompleteHandler(event:ResultEvent):void
-				{
-					var rsult:Object = JSON.parse(event.result.toString());
-					//Alert.show("Your Model has Started.  Check the Models page to view Status.", "Model Notify");
-
-					//Alert.show(rsult.results, "Model Update");
-					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+				if(error.text != ""){
+					Alert.show("Please select a map location within the Forcing Domain","Model Alert");
 				}
-				function loadErrorHandler(event:FaultEvent):void
-				{
-					Alert.show(event.toString(),"Model Update - Fail?");
-					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+				else if(dayChecker.text != ""){
+					Alert.show("Please select a Duration time or Start Date within Forcing Time Domain","Model Alert");
 				}
-				var object:Object = new Object();
-				object["step"] = "status";
-				object["id"] = modelrunsURL;
-				AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
+				else{
+					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+					//convert to geographic coords
+					var webmercpt:MapPoint = WebMercatorUtil.webMercatorToGeographic(gr.geometry) as MapPoint;
+					
+					var modelObject:Object = new Object;
+					modelObject["hydro_path"] = datasetCurrents; 
+					modelObject["duration"] = dur.value;
+					modelObject["email"] = emailStr; 
+					modelObject["geometry"] = "POINT ("+webmercpt.x+" "+webmercpt.y+")";//"POINT (-147 60.75)"; 
+					//modelObject["horiz_chunk"] = 2; 
+					modelObject["horiz_dispersion"] = Number(horiDisp.text); 
+					modelObject["behavior"] = urlStr+behavior +".json";
+					modelObject["particles"] = parts.value;
+					modelObject["release_depth"] = Number(depthVal.text);
+					modelObject["start"] = starDate.selectedDate.time; 
+					modelObject["time_chunk"] = 2;
+					//add mins,hours, and days
+					modelObject["timestep"] = timeSteH.value*60+timeSteM.value+timeSteD.value*1440;
+					modelObject["vert_dispersion"] = Number(vertDis.text);
+					modelObject["time_method"] =methodT.selectedItem.value;
+					
+					var modelurlService:HTTPService = new HTTPService;
+					modelurlService.url = modelstr;
+					modelurlService.method = "POST";
+					modelurlService.addEventListener(ResultEvent.RESULT,runCompleteHandler);
+					modelurlService.addEventListener(FaultEvent.FAULT,loadErrorHandler);
+					
+					//convert to JSON
+					var json:Object = new Object;
+					json["config"] = JSONUtil.encode(modelObject);
+					modelurlService.send(json);	
+					// Status:  http://localhost:4001/runs/5040fffa963cfb31d865885e/status.json
+					function runCompleteHandler(event:ResultEvent):void
+					{
+						var rsult:Object = JSON.parse(event.result.toString());
+						//Alert.show("Your Model has Started.  Check the Models page to view Status.", "Model Notify");
+						
+						//Alert.show(rsult.results, "Model Update");
+						AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+						
+						var object:Object = new Object();
+						object["step"] = "status";
+						object["id"] = modelrunsURL;
+						AppEvent.dispatch(AppEvent.SET_APP_STATUS,object);
+					}
+					function loadErrorHandler(event:FaultEvent):void
+					{
+						Alert.show(event.toString(),"Model Update - Fail?");
+						AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+					}
+				}
 			}
 			
 			private function createCustomTip(title:String, event:ToolTipEvent):void {
@@ -148,6 +171,19 @@
 				var ptt:ToolTipSkin = new ToolTipSkin();
 				ptt.text = title;
 				event.toolTip = ptt;
+			}
+			
+			private function checkTime():void {
+				var i:int = dur.value*24*60*1000*60;
+				var i2:Number = starDate.selectedDate.time;
+				var realEndDate:Date = new Date(i2 + i);
+				
+				if(realEndDate.time > eDate.time){
+					dayChecker.text = "Outside Forcing Availability Range";
+				}
+				else{
+					dayChecker.text = "";
+				}		
 			}
 			
 			protected function button1_clickHandler(event:MouseEvent):void
@@ -177,10 +213,10 @@
 		<mx:HRule width="100%"/>
 		
 		<!-- centers content, then set left to 0 to contrains it left -->
-		<s:HGroup width="100%" horizontalAlign="center" minHeight="550">
+		<s:HGroup width="100%" horizontalAlign="center" >
 			
 			<!-- LEFT COLUMN -->
-			<s:VGroup height="100%" width="35%" horizontalAlign="left" paddingTop="5">
+			<s:VGroup height="100%" width="42%" horizontalAlign="left" paddingTop="5">
 				
 				<s:Label text="Choose Model Items" styleName="msg-action"/>
 				
@@ -188,21 +224,26 @@
 					<mx:Form width="100%" >
 						<!-- mx:FormHeading label="Group 1"/ -->
 						<mx:FormItem label="Start Date:" styleName="form-labels">
-							<mx:DateField id="starDate" selectedDate="{defaultDate}" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelDate}" width="100"/>
+							<mx:DateField change="checkTime()" id="starDate" selectableRange="{{rangeStart:sDate,rangeEnd:eDate}}" selectedDate="{defaultDate}" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelDate}" width="100"/>
 						</mx:FormItem>
 						
 						<mx:FormItem label="Duration:" styleName="form-labels">
 						<s:HGroup verticalAlign="baseline">
-							<mx:NumericStepper id="dur" minimum="1" maximum="100" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.duration}" width="75"/>
+							<mx:NumericStepper id="dur" minimum="1" maximum="100" change="checkTime()" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.duration}" width="75"/>
 							<mx:Label text="days" styleName="form-measures" />
+							<mx:Label id="dayChecker" fontWeight="bold" color="#FF3333" />
 							<!--<s:Button styleName="btn-help" click="alertDB.open(this, true);" buttonMode="true" />-->
 						</s:HGroup>
 						</mx:FormItem>						
 						
 						<mx:FormItem label="Time Step:" styleName="form-labels">
 						<s:HGroup verticalAlign="baseline">
-							<mx:NumericStepper id="timeSte" value="60" maximum="1000" minimum="10" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelStepper}" width="75"/>
-							<mx:Label text="minutes" styleName="form-measures" />
+							<mx:NumericStepper id="timeSteM" value="60" maximum="60" minimum="1" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelStepper}" width="55"/>
+							<mx:Label text="mins" styleName="form-measures" />
+							<mx:NumericStepper id="timeSteH" value="0" maximum="24" minimum="0" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelStepper}" width="55"/>
+							<mx:Label text="hrs" styleName="form-measures" />
+							<mx:NumericStepper id="timeSteD" value="0" maximum="40" minimum="0" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelStepper}" width="55"/>
+							<mx:Label text="days" styleName="form-measures" />
 						</s:HGroup>
 						</mx:FormItem>
 					
@@ -257,13 +298,13 @@
 					<s:Label text="Select a point on Map" styleName="msg-action"/>
 					<s:Label text="Showing Forcing Domain on map" />
 				</s:HGroup>
-				<esri:Map id="map" width="100%" height="100%" minHeight="500" 
+				<esri:Map id="map" width="100%" height="100%" minHeight="330" 
 						  wrapAround180="true" scaleBarVisible="false" logoVisible="false" level="6" zoomSliderVisible="true" />		
 				
-				<s:HGroup verticalAlign="middle" horizontalAlign="right" width="100%" height="40" paddingTop="20" paddingRight="120">
+				<s:HGroup verticalAlign="middle" horizontalAlign="right" width="100%" height="40" paddingTop="10" paddingRight="120">
 					<s:Label  id="error" styleName="msg-error"/>
 					<!--<s:Button id="goBack" label="&lt; PREVIOUS" height="40" width="140" toolTipCreate="createCustomTip('', event)" toolTip="Go Back" click="back()"/>-->
-					<s:Button id="goButt" label="RUN MODEL &gt;" enabled="false" click="runModel()" 
+					<s:Button id="goButt" label="RUN MODEL &gt;" enabled="false" click="runModel()"
 							  toolTipCreate="createCustomTip('', event)"  toolTip="Run Model" height="40" width="140" 
 							  skinClass="com.skins.largeButtons"/>
 				</s:HGroup>

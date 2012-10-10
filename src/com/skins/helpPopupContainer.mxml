@@ -53,12 +53,12 @@
 		-->
 	</fx:Declarations>
 	
-	<s:VGroup height="100%" right="200" top="15"
+	<s:VGroup height="100%" top="15" right="{parent.width/2-300}"
 			  horizontalAlign="center" verticalCenter="top"
 			  gap="20"><!--paddingTop="20" horizontalCenter="0" width="100%" -->
 		
 		
-		<s:Panel id="helpWindowPanel" title="INSTRUCTIONS" width="600" height="625" 
+		<s:Panel id="helpWindowPanel" title="INSTRUCTIONS" width="650" height="475" 
 				 skinClass="com.skins.helpPopupPanelLargeSkin">
 			
 		<s:Button styleName="btn-close" click="close();" buttonMode="true" top="-30" right="10" />

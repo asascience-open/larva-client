@@ -45,6 +45,8 @@
 			[Bindable]public var backgroundMapURL:String = "";
 			[Bindable]public var modelURL:String = "";
 			[Bindable]public var modelrunsURL:String = "";
+			[Bindable]public var stDate:Date = new Date;
+			[Bindable]public var enDate:Date = new Date;
 			[Bindable]public var forcingDomainLayer:GraphicsLayer = new GraphicsLayer;
 			//behaviorList
 			[Bindable]public var behList:Object = new Object;
@@ -99,6 +101,8 @@
 						currentsUrl = event.data.currentsURL;
 						forcingDomainLayer = event.data.currentsDomain;
 						if(currentsUrl != ""){
+							stDate = event.data.startdate;
+							enDate = event.data.enddate;
 							myViewStack.selectedIndex = 4;
 							toggleTools.selectedIndex = 3;
 						}
@@ -181,6 +185,7 @@
 				obj["id"]=beh;
 				obj["currentsURL"]= currentsUrl;
 				obj["toggle"]= "true";
+				obj["currentsDomain"] = forcingDomainLayer;
 				//Check for editable behavior
 				if(toggleTools.selectedIndex == 4||toggleTools.selectedIndex == 0){
 					myViewStack.selectedIndex = toggleTools.selectedIndex +1;
@@ -360,10 +365,10 @@
 										 prompt="Please enter your email"/>
 							</s:HGroup>
 					
-							<s:VGroup id="loginPanel" verticalAlign="middle" horizontalAlign="center" visible="false" paddingTop="20">
+							<s:VGroup id="loginPanel"  verticalAlign="middle" horizontalAlign="center" visible="false" paddingTop="20">
 								<s:Label text="...LOADING..." id="statusStr" visible="false" fontSize="12" color="#021EAD" fontWeight="bold" />
-								<mx:ProgressBar id="loaderStat" visible="false" labelPlacement="center" label="" 
-												indeterminate="true" height="20" width="120" color="#021EAD" />
+								<mx:ProgressBar id="loaderStat" visible="false" labelPlacement="center" label=""
+												indeterminate="true" height="32" width="190" barSkin="com.skins.ProgressSkin" />
 							</s:VGroup>
 							
 						</mx:VBox>
@@ -386,7 +391,7 @@
 		</s:NavigatorContent>
 		
 		<s:NavigatorContent>
-			<com:ModelRun id="modelRun" forcingDomain="{forcingDomainLayer}" behavior="{beh}" urlStr="{searchUrl}" emailStr="{emailTExt.text}" modelstr="{modelURL}" datasetCurrents="{currentsUrl}" backgroundMapU="{backgroundMapURL}"/>		
+			<com:ModelRun id="modelRun" sDate="{stDate}" eDate="{enDate}"  forcingDomain="{forcingDomainLayer}" behavior="{beh}" urlStr="{searchUrl}" emailStr="{emailTExt.text}" modelstr="{modelURL}" datasetCurrents="{currentsUrl}" backgroundMapU="{backgroundMapURL}"/>		
 		</s:NavigatorContent>
 		
 		<s:NavigatorContent>

@@ -42,14 +42,22 @@ package com.classes
 					var dateElements:Array = items[0].split("/");
 					var timeElements:Array = items[1].split(":");
 					
-					var n:Date = new Date(dateElements[2],dateElements[0],dateElements[1],timeElements[0],timeElements[1]);
+					var n:Date = new Date(dateElements[2],dateElements[0]-1,dateElements[1],timeElements[0],timeElements[1]);
 					behavior.created = n.time;
 				}
 				newObj.addItem(behavior);
 			}
 			return newObj;
 		}
-		
+		public static function convertTimeToDate(object:String):Date
+		{
+			var items:Array = String(object).split(" at ");
+			var dateElements:Array = items[0].split("/");
+			var timeElements:Array = items[1].split(":");
+			
+			var n:Date = new Date(dateElements[2],dateElements[0]-1,dateElements[1],timeElements[0],timeElements[1]);
+			return n;
+		}
 		//change values for Currents Date fields JSON
 		public static function convertTimeObjectCurrents(object:Object):Object
 		{
