@@ -255,7 +255,7 @@
 			
 		<!--Settlement Depth-->
 			<mx:HRule width="100%"/>
-			<s:Label text="SETTLEMENT DEPTH" styleName="section-titles"/>
+			<s:Label text="TRANSITION OUT OF THE PLANKTON" styleName="section-titles"/>
 			<mx:FormItem label="Upper:" id="upText" styleName="form-labels">
 				<s:HGroup verticalAlign="baseline">
 					<cl:NumberInput id="upSettle" fractionalDigits="5" change="refreshValues()" width="40"/>
