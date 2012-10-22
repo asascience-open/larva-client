@@ -133,13 +133,14 @@
 			
 			private function enterClick(event:MouseEvent):void
 			{
-				if(butLog.label == "Enter"){
-					emailValidator.validate(emailTExt.text);
+				emailValidator.validate(emailTExt.text);
+				/* if(butLog.label == "Enter"){
+					
 				}
 				else{
 					loginBox.visible = true;
 					butLog.label = "Enter";
-				}
+				} */
 			}
 			
 			private function enterApp():void
@@ -356,23 +357,23 @@
 				<s:VGroup width="100%" height="100%" horizontalAlign="center" verticalAlign="middle" y="-9">
 					<!-- mx:VBox id="loginBox" backgroundColor="0xCCCCCC" showEffect="fade" cornerRadius="8" alpha=".8" visible="false" width="376" height="70" verticalAlign="middle" -->
 					
-						<mx:VBox id="loginBox" backgroundColor="#ffffff" showEffect="fade" cornerRadius="8" alpha=".8" visible="false" 
-								 width="500" height="200" verticalAlign="middle" horizontalAlign="center">
+						<mx:VBox id="loginBox" backgroundColor="#ffffff" showEffect="fade" cornerRadius="9" alpha=".8" visible="true" 
+								 width="500" height="135" verticalAlign="middle" horizontalAlign="center">
 							
-							<s:HGroup verticalCenter="-20" horizontalAlign="center" verticalAlign="middle">
-							<s:Label paddingLeft="10" text="Enter Email:" fontWeight="bold" fontSize="15" width="105" />
-							<s:TextInput enter="checkEmail(event)" id="emailTExt" width="300" height="30" fontSize="18" 
+							<s:HGroup verticalCenter="-30" paddingTop="27" horizontalAlign="center" verticalAlign="middle">
+								<s:Label paddingLeft="10" text="Enter Email:" fontWeight="bold" fontSize="15" width="105" />
+								<s:TextInput enter="checkEmail(event)" id="emailTExt" width="300" height="30" fontSize="18" 
 										 prompt="Please enter your email"/>
 							</s:HGroup>
 					
-							<s:VGroup id="loginPanel"  verticalAlign="middle" horizontalAlign="center" visible="false" paddingTop="20">
+							<s:VGroup id="loginPanel"  verticalAlign="middle" horizontalAlign="center" visible="false" paddingTop="5">
 								<s:Label text="...LOADING..." id="statusStr" visible="false" fontSize="12" color="#021EAD" fontWeight="bold" />
 								<mx:ProgressBar id="loaderStat" visible="false" labelPlacement="center" label=""
-												indeterminate="true" height="32" width="190" barSkin="com.skins.ProgressSkin" />
+												indeterminate="true" height="27" width="190" barSkin="com.skins.ProgressSkin" />
 							</s:VGroup>
 							
 						</mx:VBox>
-					<s:Button id="butLog" label="LOGIN" click="enterClick(event)" 
+					<s:Button id="butLog" label="Enter" click="enterClick(event)" 
 							  width="120" height="45" styleName="btn-login" skinClass="com.skins.largeButtons"/>
 				</s:VGroup>
 			</s:BorderContainer>

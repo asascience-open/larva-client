@@ -217,7 +217,7 @@
 				<s:Label text="Choose a Currents Dataset" styleName="msg-action"/>
 				
 				<mx:DataGrid id="bDG" itemClick="{dgClickHandler(event)}" dataProvider="{forcingCurrentList}" 
-							 width="100%" rowCount="12" styleName="dataGridText" >
+							 width="100%" rowCount="11"  styleName="dataGridText" >
 			
 					<mx:columns>
 						<mx:DataGridColumn headerText="Name" 	 minWidth="150"	dataField="name" />

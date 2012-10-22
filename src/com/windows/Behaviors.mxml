@@ -27,11 +27,16 @@
 		import com.esri.ags.Graphic;
 		import com.esri.ags.SpatialReference;
 		import com.esri.ags.geometry.Extent;
+		import com.esri.ags.geometry.Geometry;
+		import com.esri.ags.geometry.MapPoint;
 		import com.esri.ags.geometry.Polygon;
+		import com.esri.ags.geometry.Polyline;
 		import com.esri.ags.geometry.WebMercatorMapPoint;
 		import com.esri.ags.layers.ArcGISTiledMapServiceLayer;
 		import com.esri.ags.layers.GraphicsLayer;
+		import com.esri.ags.utils.GeometryUtil;
 		import com.esri.ags.utils.JSONUtil;
+		import com.esri.ags.utils.WebMercatorUtil;
 		import com.skins.ToolTipSkin;
 		import com.skins.helpPopupContainer;
 		import com.skins.largeButtons;
@@ -40,18 +45,15 @@
 		import mx.collections.ArrayCollection;
 		import mx.controls.Alert;
 		import mx.controls.dataGridClasses.DataGridColumn;
-		import mx.controls.dataGridClasses.DataGridItemRenderer;
 		import mx.events.ListEvent;
 		import mx.events.ToolTipEvent;
 		import mx.managers.PopUpManager;
-		import mx.messaging.channels.StreamingAMFChannel;
+		import mx.rpc.AsyncResponder;
+		import mx.rpc.AsyncToken;
+		import mx.rpc.Fault;
 		import mx.rpc.events.FaultEvent;
 		import mx.rpc.events.ResultEvent;
 		import mx.rpc.http.HTTPService;
-		import mx.states.AddItems;
-		
-		import spark.components.Panel;
-		import spark.events.GridEvent;
 
 		[Bindable]
 		public var behaviorsList:Object = new Object;
@@ -251,38 +253,89 @@
 			if(object.geometry != "null")
 			{
 				var geoString:String = object.geometry;
+				//double check
 				if(geoString != null)
 				{
 					//Use for only one (non-multiPoly) polygon
 					//Because the OpenScales object model was fucked up
 					var ra:Array = new Array();
-					var firstParse:Array = 	geoString.split("((");
-					var secParse:Array = String(firstParse[1]).split("))");
-					var thirdParse:Array = String(secParse[0]).split(",");
-					
-					for(var l:int=0; l <thirdParse.length; l++)
-					{
-						var fourthParse:Array = String(thirdParse[l]).split(" ");
-						//condition for a space " " in the array
-						if(l >0){
-							ra.push(new WebMercatorMapPoint(fourthParse[1],fourthParse[2]));
-						}
-						else{
-							ra.push(new WebMercatorMapPoint(fourthParse[0],fourthParse[1]));
-						}
-					} 
+					//behavior polygon
 					var geoPoly:Polygon = new Polygon;
 					
-					geoPoly.addRing(ra);
-					var graGraphic:Graphic = new Graphic(geoPoly, polygonSymbol);
+					//seperate for two if cross dateline
+					if(geoString.search("),(")>-1){
+						//remove last ))
+						geoString = geoString.slice( 0, -2 );
+						//POLYGON((0 0,4 0,4 4,0 4,0 0),(1 1, 2 1, 2 2, 1 2,1 1))
+						var firstParse:Array = 	geoString.split("POLYGON((");
+						var secParse:Array = String(firstParse[1]).split("),(");
+						
+						for(var q:int=0; q <thirdParse.length; q++)
+						{
+							var thirdParse:Array = String(secParse[q]).split(",");
+							for(var l:int=0; l <thirdParse.length; l++)
+							{
+								var fourthParse:Array = String(thirdParse[l]).split(" ");
+								//condition for a space " " in the array
+								if(l >0){
+									ra.push(new WebMercatorMapPoint(fourthParse[1],fourthParse[2]));
+								}
+								else{
+									ra.push(new WebMercatorMapPoint(fourthParse[0],fourthParse[1]));
+								}
+							}
+							geoPoly.addRing(ra);
+						}	
+					}
+					else{
+						var firstParse:Array = 	geoString.split("((");
+						var secParse:Array = String(firstParse[1]).split("))");
+						var thirdParse:Array = String(secParse[0]).split(",");
+						
+						for(var l:int=0; l <thirdParse.length; l++)
+						{
+							var fourthParse:Array = String(thirdParse[l]).split(" ");
+							//condition for a space " " in the array
+							if(l >0){
+								ra.push(new WebMercatorMapPoint(fourthParse[1],fourthParse[2]));
+							}
+							else{
+								ra.push(new WebMercatorMapPoint(fourthParse[0],fourthParse[1]));
+							}
+						}
+						geoPoly.addRing(ra);
+					}
 					
+					var graGraphic:Graphic = new Graphic(geoPoly, polygonSymbol);
 					map.extent = geoPoly.extent;
 					var graphLayer:GraphicsLayer = new GraphicsLayer;
+					
 					graphLayer.id = "bound";
 					graphLayer.add(graGraphic);
 					map.addLayer(graphLayer); 
 					map.zoomOut();
 					noLoc.visible = false;
+					
+					/* this didn't work for handling dateline
+					//GeometryUtil.normalizeCentralMeridian([geoPoly],esriGeometryService,new AsyncResponder(normalizePoly,faultHandler));
+					//var newGeom:Polygon = WebMercatorUtil.geographicToWebMercator(geoPoly) as Polygon;
+					function normalizePoly(item:Object, token:Object = null):void
+					{
+						var geoPoly2:Polyline = new Polyline;
+						geoPoly2.addPath(item[0].paths[0]);
+						var graGraphic:Graphic = new Graphic(geoPoly2, lineSymbol);
+						map.extent = geoPoly.extent;
+						var graphLayer:GraphicsLayer = new GraphicsLayer;
+						
+						graphLayer.id = "bound";
+						graphLayer.add(graGraphic);
+						map.addLayer(graphLayer); 
+						map.zoomOut();
+						noLoc.visible = false;
+					}
+					function faultHandler(fault:Fault, asyncToken:AsyncToken):void
+					{
+					} */
 				}
 				else{
 					//Alert.show("There is no Behavior Location set","Alert");
@@ -348,7 +401,9 @@
 </fx:Script>
 	<fx:Declarations>
 		<esri:SimpleLineSymbol id="lineSymbol" color="0xFFCA00" width="2" alpha=".8" style="solid"/>
-		<esri:SimpleFillSymbol id="polygonSymbol" color="0x999999" alpha=".2" style="solid" outline="{lineSymbol}"/>
+		<esri:SimpleFillSymbol id="polygonSymbol" color="0x999999" alpha=".4" style="solid" outline="{lineSymbol}"/>
+		<esri:GeometryService id="esriGeometryService" 
+							  url="http://sampleserver1.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer"/>
 	</fx:Declarations>
 	<s:Button styleName="btn-help" buttonMode="true" click="button1_clickHandler(event)" right="40" top="20"/>
 	
@@ -381,7 +436,7 @@
 							 variableRowHeight="true">-->
 					
 				<mx:DataGrid id="bDG" itemClick="{dgClickHandler(event)}" dataProvider="{behaviorsList}" 
-							 width="100%" rowCount="12" styleName="dataGridText">
+							 width="100%" rowCount="11" styleName="dataGridText">
 					<mx:columns>
 						<mx:DataGridColumn headerText="Name"		dataField="name"  />
 						<mx:DataGridColumn headerText="Genus" 		dataField="genus" />

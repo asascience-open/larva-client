@@ -205,7 +205,7 @@
 				
 				<s:Label text="Model List" styleName="msg-action" paddingBottom="5"/>
 				
-				<mx:DataGrid id="runs" dataProvider="{modelList}" width="100%" rowCount="11" styleName="dataGridText" verticalAlign="middle">
+				<mx:DataGrid id="runs" dataProvider="{modelList}" width="100%" rowCount="10" styleName="dataGridText" verticalAlign="middle">
 					<mx:columns>
 						<mx:DataGridColumn headerText="Created" dataField="created"  width="110" />
 						<mx:DataGridColumn headerText="User" 	dataField="email" />
