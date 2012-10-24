@@ -263,12 +263,12 @@
 					var geoPoly:Polygon = new Polygon;
 					
 					//seperate for two if cross dateline
-					if(geoString.search("),(")>-1){
+					if(geoString.search(")),((")>-1){
 						//remove last ))
-						geoString = geoString.slice( 0, -2 );
-						//POLYGON((0 0,4 0,4 4,0 4,0 0),(1 1, 2 1, 2 2, 1 2,1 1))
-						var firstParse:Array = 	geoString.split("POLYGON((");
-						var secParse:Array = String(firstParse[1]).split("),(");
+						geoString = geoString.slice( 0, -3 );
+						//MULTIPOLYGON (((30 20, 10 40, 45 40, 30 20)),((15 5, 40 10, 10 20, 5 10, 15 5)))
+						var firstParse:Array = 	geoString.split("MULTIPOLYGON(((");
+						var secParse:Array = String(firstParse[1]).split(")),((");
 						
 						for(var q:int=0; q <thirdParse.length; q++)
 						{

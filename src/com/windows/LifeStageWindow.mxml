@@ -234,7 +234,7 @@
 			<s:Label text="STAGE DURATION" styleName="section-titles"/>
 			<mx:FormItem label="User Defined Days:" styleName="form-labels-exception">
 				<s:HGroup verticalAlign="baseline">
-					<mx:NumericStepper id="durT" change="refreshValues()" width="60"/>
+					<mx:NumericStepper id="durT" maximum="100" change="refreshValues()" width="60"/>
 					<!--<mx:Label text="days" styleName="form-measures" />-->
 				</s:HGroup>
 			</mx:FormItem>
