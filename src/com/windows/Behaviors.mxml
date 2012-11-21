@@ -69,8 +69,8 @@
 		[Bindable]
 		public var behSelectedID:String = "";
 		
-		private var spatRef:SpatialReference = new SpatialReference(4326);
-		private var spatRefWM:SpatialReference = new SpatialReference(102100);
+		//private var spatRef:SpatialReference = new SpatialReference(4326);
+		//private var spatRefWM:SpatialReference = new SpatialReference(102100);
 		private var loadedFileData:Object;		
 		private var mapExtent:Extent = new Extent();
 		//private var mapExtent:Extent = new Extent(-11294052,-4175045,5221238,6822104,spatRefWM);

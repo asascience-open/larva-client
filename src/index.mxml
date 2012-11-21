@@ -44,6 +44,7 @@
 			[Bindable]public var currentsUrl:String = "";
 			[Bindable]public var backgroundMapURL:String = "";
 			[Bindable]public var modelURL:String = "";
+			[Bindable]public var landURL:String = "";
 			[Bindable]public var modelrunsURL:String = "";
 			[Bindable]public var stDate:Date = new Date;
 			[Bindable]public var enDate:Date = new Date;
@@ -129,6 +130,7 @@
 				forcingURL=configMain.forcing.toString();
 				modelURL=configMain.model.toString();
 				modelrunsURL=configMain.modelrunsURL.toString();
+				landURL = configMain.wmsEndpoint.toString();
 			}
 			
 			private function enterClick(event:MouseEvent):void
@@ -392,7 +394,7 @@
 		</s:NavigatorContent>
 		
 		<s:NavigatorContent>
-			<com:ModelRun id="modelRun" sDate="{stDate}" eDate="{enDate}"  forcingDomain="{forcingDomainLayer}" behavior="{beh}" urlStr="{searchUrl}" emailStr="{emailTExt.text}" modelstr="{modelURL}" datasetCurrents="{currentsUrl}" backgroundMapU="{backgroundMapURL}"/>		
+			<com:ModelRun landMapU="{landURL}" id="modelRun" sDate="{stDate}" eDate="{enDate}"  forcingDomain="{forcingDomainLayer}" behavior="{beh}" urlStr="{searchUrl}" emailStr="{emailTExt.text}" modelstr="{modelURL}" datasetCurrents="{currentsUrl}" backgroundMapU="{backgroundMapURL}"/>		
 		</s:NavigatorContent>
 		
 		<s:NavigatorContent>

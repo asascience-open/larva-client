@@ -5,4 +5,6 @@
 	<forcing>http://services.larvamap.asascience.com/datasets.json</forcing>
 	<model>http://services.larvamap.asascience.com/run.json</model>
 	<modelrunsURL>http://services.larvamap.asascience.com/runs.json</modelrunsURL>
+	<wmsEndpoint>http://asascience.mine.nu:8080/geoserver/ows?</wmsEndpoint>
+	<d>service=wms&version=1.1.1&request=GetCapabilities</d>
 </config>
