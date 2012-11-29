@@ -5,6 +5,8 @@ package com.classes
 	import mx.collections.ArrayCollection;
 	import mx.controls.DateField;
 	import mx.formatters.DateFormatter;
+	
+	import spark.formatters.DateTimeFormatter;
 
 	public class behavior
 	{
@@ -27,6 +29,20 @@ package com.classes
 				newObj.addItem(behavior);
 			}
 			return newObj;
+		}
+		
+		//change Date for Behavior Created Date JSON from EPOC to readable
+		public static function convertTimeObjectConfig(object:Object):Object
+		{
+			//var df:DateFormatter = new DateFormatter;
+			var s:DateTimeFormatter = new DateTimeFormatter();
+			s.useUTC = true;
+			s.dateTimePattern = "MMMM dd, yyyy HH:mm zzzz";
+			var beh:Date = new Date();
+			beh.time = Number(object.start);
+			object.start = s.format(beh)+ " - UTC";//df.format(beh);
+			
+			return object;
 		}
 		
 		//change Date for Behavior Created Date JSON from readable to EPOC

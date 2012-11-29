@@ -18,6 +18,7 @@
 			import com.esri.ags.symbols.SimpleMarkerSymbol;
 			import com.esri.ags.utils.JSONUtil;
 			import com.skins.ToolTipSkin;
+			import com.skins.configPopupContainer;
 			import com.skins.helpPopupContainer;
 			import com.skins.regularButtons;
 			
@@ -89,7 +90,7 @@
 			{
 				runs.dataProvider = null;
 			}
-			public function downloadUrl(data:Object,url:String):void
+			public function downloadUrl(data:Object,url:String,idN:String = "none"):void
 			{
 				for(var l:int=0; l <data.length; l++)
 				{
@@ -102,7 +103,50 @@
 					if(url == 'log'&&data[l].Logfile){
 						navigateToURL(new URLRequest(data[l].Logfile),'_blank');
 					}
+					if(url == 'config'&&idN != "none"){
+						//Call and parse out Model Run Config file to popup window
+						AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+						var configservrequest:HTTPService = new HTTPService();
+						configservrequest.addEventListener(ResultEvent.RESULT, modelConfigService);
+						
+						var configURLCall:String = modelrunsURL.replace(".json","/"+idN+"/run_config")
+						configservrequest.url = configURLCall;
+						configservrequest.resultFormat = "object";
+						configservrequest.send();	
+						
+						function modelConfigService(event:ResultEvent): void
+						{
+							var jsResult:Object = JSONUtil.decode(event.result.toString());
+							var configObject:Object = behavior.convertTimeObjectConfig(jsResult);
+							
+							popUpConfig(configObject);
+							AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+						}
+					}
 				}				
+			}
+			
+			private function popUpConfig(ob:Object):void
+			{
+				var conf:configPopupContainer = new configPopupContainer();
+				conf.hydroT = ob.hydro_path;
+				conf.partT = ob.particles;
+				conf.timestpT = ob.timestep;
+				conf.geomT = ob.geometry;
+				conf.releaseT = ob.release_depth;
+				conf.methodT = ob.time_method;
+				conf.verticT = ob.horiz_dispersion;
+				conf.horizT = ob.vert_dispersion;
+				conf.ownT = ob.email;
+				conf.sDateT = ob.start;
+				conf.behT = ob.behavior;
+				conf.durT = ob.duration;
+				
+				conf.open(this, true);
+				conf.width = stage.width;
+				conf.height = stage.height;
+				
+				PopUpManager.centerPopUp(conf);
 			}
 			
 			public function viewTrack(track:String):void
@@ -209,7 +253,7 @@
 					<mx:columns>
 						<mx:DataGridColumn headerText="Created" dataField="created"  width="110" />
 						<mx:DataGridColumn headerText="User" 	dataField="email" />
-						<mx:DataGridColumn headerText="Progress/Status" dataField="status" itemRenderer="com.windows.statusRenderer" textAlign="center" fontWeight="bold" width="110" />
+						<mx:DataGridColumn headerText="Progress/Status" dataField="status" itemRenderer="com.windows.statusRenderer" textAlign="center" fontWeight="bold" width="105" />
 						<mx:DataGridColumn headerText="Trackline" width="56" textAlign="center" >
 							<mx:itemRenderer>
 								<fx:Component>
@@ -262,6 +306,15 @@
 									<mx:LinkButton label="" click="outerDocument.downloadUrl(data.output,'log')" 
 												   visible="true" useHandCursor="true" buttonMode="true" toolTip="Download Latest Log File"
 												   icon="@Embed(source='../../assets/images/log.png')"/>
+								</fx:Component>
+							</mx:itemRenderer>
+						</mx:DataGridColumn>
+						<mx:DataGridColumn headerText="Parameters" width="63" textAlign="center" >
+							<mx:itemRenderer>
+								<fx:Component>
+									<mx:LinkButton label="" click="outerDocument.downloadUrl(data.output,'config',data._id)" 
+												   visible="true" useHandCursor="true" buttonMode="true" toolTip="View Model Parameter Config File"
+												   icon="@Embed(source='../../assets/images/options.png')"/>
 								</fx:Component>
 							</mx:itemRenderer>
 						</mx:DataGridColumn>
