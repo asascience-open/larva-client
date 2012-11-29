@@ -92,38 +92,41 @@
 			}
 			public function downloadUrl(data:Object,url:String,idN:String = "none"):void
 			{
-				for(var l:int=0; l <data.length; l++)
-				{
-					if(url == 'shp'&&data[l].Shapefile){
-						navigateToURL(new URLRequest(data[l].Shapefile),'_blank');
-					}
-					if(url == 'netcdf'&&data[l].NetCDF){
-						navigateToURL(new URLRequest(data[l].NetCDF),'_blank');
-					}
-					if(url == 'log'&&data[l].Logfile){
-						navigateToURL(new URLRequest(data[l].Logfile),'_blank');
-					}
-					if(url == 'config'&&idN != "none"){
-						//Call and parse out Model Run Config file to popup window
-						AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
-						var configservrequest:HTTPService = new HTTPService();
-						configservrequest.addEventListener(ResultEvent.RESULT, modelConfigService);
+				if(url == 'config'&&idN != "none"){
+					//Call and parse out Model Run Config file to popup window
+					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_ON,"");
+					var configservrequest:HTTPService = new HTTPService();
+					configservrequest.addEventListener(ResultEvent.RESULT, modelConfigService);
+					
+					var configURLCall:String = modelrunsURL.replace(".json","/"+idN+"/run_config")
+					idN = "none";
+					configservrequest.url = configURLCall;
+					configservrequest.resultFormat = "object";
+					configservrequest.send();	
+					
+					function modelConfigService(event:ResultEvent): void
+					{
+						var jsResult:Object = JSONUtil.decode(event.result.toString());
+						var configObject:Object = behavior.convertTimeObjectConfig(jsResult);
 						
-						var configURLCall:String = modelrunsURL.replace(".json","/"+idN+"/run_config")
-						configservrequest.url = configURLCall;
-						configservrequest.resultFormat = "object";
-						configservrequest.send();	
-						
-						function modelConfigService(event:ResultEvent): void
-						{
-							var jsResult:Object = JSONUtil.decode(event.result.toString());
-							var configObject:Object = behavior.convertTimeObjectConfig(jsResult);
-							
-							popUpConfig(configObject);
-							AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+						popUpConfig(configObject);
+						AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
+					}
+				}
+				else{
+					for(var l:int=0; l <data.length; l++)
+					{
+						if(url == 'shp'&&data[l].Shapefile){
+							navigateToURL(new URLRequest(data[l].Shapefile),'_blank');
+						}
+						if(url == 'netcdf'&&data[l].NetCDF){
+							navigateToURL(new URLRequest(data[l].NetCDF),'_blank');
+						}
+						if(url == 'log'&&data[l].Logfile){
+							navigateToURL(new URLRequest(data[l].Logfile),'_blank');
 						}
 					}
-				}				
+				}			
 			}
 			
 			private function popUpConfig(ob:Object):void
@@ -142,7 +145,7 @@
 				conf.behT = ob.behavior;
 				conf.durT = ob.duration;
 				
-				conf.open(this, true);
+				conf.open(this, false);
 				conf.width = stage.width;
 				conf.height = stage.height;
 				
@@ -303,8 +306,8 @@
 						<mx:DataGridColumn headerText="Log" width="46" textAlign="center" >
 							<mx:itemRenderer>
 								<fx:Component>
-									<mx:LinkButton label="" click="outerDocument.downloadUrl(data.output,'log')" 
-												   visible="true" useHandCursor="true" buttonMode="true" toolTip="Download Latest Log File"
+									<mx:LinkButton label="" click="outerDocument.downloadUrl(data.output,'log')" enabled="{data.status =='SUCCESS' || data.status =='FAILURE'}"
+												   visible="true" useHandCursor="true" buttonMode="true" toolTip="Download Latest Log File" disabledIcon="@Embed(source='../../assets/images/na.png')"
 												   icon="@Embed(source='../../assets/images/log.png')"/>
 								</fx:Component>
 							</mx:itemRenderer>

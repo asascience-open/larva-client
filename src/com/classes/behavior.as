@@ -41,7 +41,10 @@ package com.classes
 			var beh:Date = new Date();
 			beh.time = Number(object.start);
 			object.start = s.format(beh)+ " - UTC";//df.format(beh);
-			
+			if(object.time_method == null)
+			{
+				object.time_method = "Interpolation";
+			}
 			return object;
 		}
 		
