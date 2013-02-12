@@ -81,7 +81,7 @@
 					runs.dataProvider.refresh();
 				}
 				function loadError(event:FaultEvent): void{
-					Alert.show("Service Error");
+					Alert.show("Error fetching Current Models");
 					AppEvent.dispatch(AppEvent.SET_APP_PROGRESS_OFF,"");
 				}
 			}
@@ -261,7 +261,7 @@
 							<mx:itemRenderer>
 								<fx:Component>
 									<mx:LinkButton label="" disabledIcon="@Embed(source='../../assets/images/na.png')"
-												   enabled="{data.status =='SUCCESS'}" toolTip="{(data.status =='SUCCESS') ? 'View Model Trajectory on Map': 'Trajectory not Available'}"
+												   enabled="{data.task_result.toUpperCase() =='SUCCESS'}" toolTip="{(data.task_result.toUpperCase() =='SUCCESS') ? 'View Model Trajectory on Map': 'Trajectory not Available'}"
 											   click="outerDocument.viewTrack(data.trackline)" useHandCursor="true" buttonMode="true"
 											   icon="@Embed(source='../../assets/images/trackline.png')" />
 								</fx:Component>
@@ -271,8 +271,8 @@
 							<mx:itemRenderer>
 								<fx:Component>
 									<mx:LinkButton label="" click="outerDocument.downloadUrl(data.output,'netcdf')" 
-												   disabledIcon="@Embed(source='../../assets/images/na.png')" toolTip="{(data.status =='SUCCESS') ? 'Download NetCDF': 'NetCDF not Available'}"
-												   enabled="{data.status =='SUCCESS'}" useHandCursor="true" buttonMode="true"
+												   disabledIcon="@Embed(source='../../assets/images/na.png')" toolTip="{(data.task_result.toUpperCase() =='SUCCESS') ? 'Download NetCDF': 'NetCDF not Available'}"
+												   enabled="{data.task_result.toUpperCase() =='SUCCESS'}" useHandCursor="true" buttonMode="true"
 											   	   icon="@Embed(source='../../assets/images/downloadFile.png')" >
 									<!--<fx:Script>
 										<![CDATA[
@@ -297,8 +297,8 @@
 							<mx:itemRenderer>
 								<fx:Component>
 									<mx:LinkButton label="" click="outerDocument.downloadUrl(data.output,'shp')" 
-												   disabledIcon="@Embed(source='../../assets/images/na.png')" toolTip="{(data.status =='SUCCESS') ? 'Download Shapefile': 'Shapefile not Available'}"
-												   enabled="{data.status =='SUCCESS'}"  useHandCursor="true" buttonMode="true"
+												   disabledIcon="@Embed(source='../../assets/images/na.png')" toolTip="{(data.task_result.toUpperCase() =='SUCCESS') ? 'Download Shapefile': 'Shapefile not Available'}"
+												   enabled="{data.task_result.toUpperCase() =='SUCCESS'}"  useHandCursor="true" buttonMode="true"
 											   icon="@Embed(source='../../assets/images/downloadFile.png')"/>
 								</fx:Component>
 							</mx:itemRenderer>
@@ -306,7 +306,7 @@
 						<mx:DataGridColumn headerText="Log" width="46" textAlign="center" >
 							<mx:itemRenderer>
 								<fx:Component>
-									<mx:LinkButton label="" click="outerDocument.downloadUrl(data.output,'log')" enabled="{data.status =='SUCCESS' || data.status =='FAILURE'}"
+									<mx:LinkButton label="" click="outerDocument.downloadUrl(data.output,'log')" enabled="{data.task_result.toUpperCase() =='SUCCESS' || data.task_result.toUpperCase() =='FAILURE'}"
 												   visible="true" useHandCursor="true" buttonMode="true" toolTip="Download Latest Log File" disabledIcon="@Embed(source='../../assets/images/na.png')"
 												   icon="@Embed(source='../../assets/images/log.png')"/>
 								</fx:Component>

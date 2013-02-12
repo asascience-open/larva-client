@@ -9,10 +9,10 @@
 			import com.classes.WMSLayer;
 			import com.classes.tooltips;
 			import com.esri.ags.Graphic;
-			import com.esri.ags.SpatialReference;
 			import com.esri.ags.events.DrawEvent;
 			import com.esri.ags.geometry.Extent;
 			import com.esri.ags.geometry.MapPoint;
+			import com.esri.ags.geometry.WebMercatorMapPoint;
 			import com.esri.ags.layers.ArcGISTiledMapServiceLayer;
 			import com.esri.ags.layers.GraphicsLayer;
 			import com.esri.ags.tools.DrawTool;
@@ -95,6 +95,84 @@
 				}
 			}
 			
+			private function selectLocation():void{
+				map.removeLayer(map.getLayer("target"));
+				
+				var mappoint:WebMercatorMapPoint = new WebMercatorMapPoint(Number(longT.text),Number(latT.text));
+				var pointGraphic:GraphicsLayer = new GraphicsLayer;
+				gr.geometry = mappoint;
+				gr.symbol = pt;
+				pointGraphic.add(gr);
+				pointGraphic.id = "target";
+				map.addLayer(pointGraphic);
+				
+				if(Extent(forcingDomain.graphicProvider[0].geometry.extent).contains(mappoint) == false){
+					error.text = "! Outside Forcing Domain. Click inside box.";
+					runModelEnabled = false;
+				}
+				else{
+					var layerName:String = "10m_land";
+					
+					var _params:URLVariables = new URLVariables();
+					_params.transparent = "true";
+					
+					_params.version = "1.1.1";
+					_params.styles = "";
+					
+					//specific to getFeatureInfo:
+					_params.request = "GetFeatureInfo"; 
+					_params.info_format = "text/plain";
+					_params.format="text/plain";
+					_params.exceptions = "application/vnd.ogc.se_xml";
+					_params.srs = "EPSG:3857";
+					_params.service = "wms";
+					//_params._dc= "1298660600532";
+					_params.width = map.width;
+					_params.height = map.height;
+					
+					_params.bbox = map.extent.xmin + "," + map.extent.ymin + "," + map.extent.xmax + "," + map.extent.ymax; 
+					_params.layers = layerName;
+					_params.query_layers=layerName;
+					//_params.feature_count="3";  
+					
+					//add the pixel points of this click:
+					var mp:MapPoint = mappoint as MapPoint;
+					_params.x = map.toScreen(mp).x.toFixed();
+					_params.y = map.toScreen(mp).y.toFixed();
+					
+					var _httpService:HTTPService = new HTTPService();
+					_httpService.showBusyCursor = true;
+					_httpService.url = landMapU;
+					
+					//var layerTit:String = layer.name;
+					
+					_httpService.addEventListener("result", processIdentifyResults);
+					_httpService.addEventListener("fault", onFault);
+					_httpService.resultFormat = "xml"; 
+					_httpService.send(_params);
+					
+					function onFault(event:FaultEvent):void
+					{
+						CursorManager.removeBusyCursor();
+						error.text = "Land-Water Service Error";
+						runModelEnabled = false;
+					}
+					
+					function processIdentifyResults(event:ResultEvent):void
+					{
+						if(event.result.nodeValue.search("no features")>-1){
+							error.text = "";
+							runModelEnabled = true;
+						}
+						else{
+							error.text = "Location is on Land.  Click outside land boundary.  ";
+							runModelEnabled = false;
+						}
+						CursorManager.removeBusyCursor();
+					}
+				}
+			}
+			
 			private function pointDrop(event:DrawEvent):void
 			{
 				map.removeLayer(map.getLayer("target"));
@@ -104,6 +182,13 @@
 				
 				pointGraphic.id = "target";
 				map.addLayer(pointGraphic);
+				
+				var geomp:MapPoint = new MapPoint;
+				geomp = WebMercatorUtil.webMercatorToGeographic(event.graphic.geometry) as MapPoint;
+				
+				longT.text = geomp.x.toFixed(3);
+				latT.text = geomp.y.toFixed(3);
+				
 				//check to see if the point connects with forcing Extent
 				if(Extent(forcingDomain.graphicProvider[0].geometry.extent).contains(event.graphic.geometry) == false){
 					error.text = "! Outside Forcing Domain. Click inside box.";
@@ -137,8 +222,9 @@
 					//_params.feature_count="3";  
 					
 					//add the pixel points of this click:
-					_params.x = map.toScreen(event.graphic.geometry as MapPoint).x.toFixed();
-					_params.y = map.toScreen(event.graphic.geometry as MapPoint).y.toFixed();
+					var mp:MapPoint = event.graphic.geometry as MapPoint;
+					_params.x = map.toScreen(mp).x.toFixed();
+					_params.y = map.toScreen(mp).y.toFixed();
 					
 					var _httpService:HTTPService = new HTTPService();
 					_httpService.showBusyCursor = true;
@@ -275,7 +361,6 @@
 				timest.text = ((timeSteH.value*3600+timeSteM.value*60+timeSteD.value*86400)/60).toString();
 			}
 			
-			
 		]]>
 	</fx:Script>
 	
@@ -382,6 +467,11 @@
 				<s:HGroup verticalAlign="baseline" >
 					<s:Label text="Select a point on Map" styleName="msg-action"/>
 					<s:Label text="Showing Forcing Domain on map" />
+					<s:Label text="Location:" styleName="msg-action" paddingLeft="20"/>
+					<s:Label text="Lat:" />
+					<s:TextInput id="latT" change="selectLocation()" prompt="Latitude" restrict="[0-9]*-." width="66"/>
+					<s:Label text="Long:" />
+					<s:TextInput id="longT" change="selectLocation()" prompt="Longitude" restrict="[0-9]*-." width="66"/>
 				</s:HGroup>
 				<esri:Map id="map" width="100%" height="100%" minHeight="330"
 						  wrapAround180="false" scaleBarVisible="false" logoVisible="false" level="6" zoomSliderVisible="true" />		
@@ -397,66 +487,4 @@
 			<!-- / END - RIGHT COLUMN -->
 		</s:HGroup>	
 	</s:VGroup>
-	
-	
-	<!-- ORIGINAL
-	<mx:VBox width="100%" height="100%" paddingTop="13" horizontalAlign="center">
-	<s:Label text="Run Model" fontSize="20" paddingBottom="5" paddingTop="5" fontWeight="bold"/>
-	<mx:HRule width="100%"/>
-	
-	<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
-	<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
-	<mx:Label fontWeight="bold"  fontSize="13" text="Start Date:" />
-	<mx:DateField id="starDate" selectedDate="{defaultDate}" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelDate}"/>
-	<mx:Label fontWeight="bold" fontSize="13" text="Duration:" />
-	<mx:NumericStepper fontWeight="bold" id="dur" minimum="1" maximum="100" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.duration}"/>
-	<s:Label text="days" color="white" fontWeight="bold" fontSize="12"/>
-	<!/-<mx:ComboBox selectionColor="#CAE8E8" paddingLeft="0" id="durUnits" dataProvider="['days','months']" />/->
-	<mx:Label fontWeight="bold" fontSize="13" text="Time Step:" />
-	<mx:NumericStepper fontWeight="bold" toolTip="{tooltips.modelStepper}" toolTipCreate="createCustomTip('', event)" id="timeSte" value="60" maximum="1000" minimum="10"/>
-	<s:Label text="minutes" color="white" fontWeight="bold" fontSize="12"/>
-	<mx:ComboBox selectionColor="#CAE8E8" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.interp}" id="methodT" >
-		<mx:dataProvider>
-			<mx:ArrayList>
-				<fx:Object label="Use Linear Interpolation" value="interp"/>
-				<fx:Object label="Use Nearest Timestep" value="nearest"/>
-			</mx:ArrayList>
-		</mx:dataProvider>
-	</mx:ComboBox>
-				</mx:HBox>
-			</mx:HBox>
-	<mx:HRule width="100%"/>
-	<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="3" paddingBottom="3">
-		<mx:HBox verticalAlign="middle" horizontalAlign="center" width="85%" paddingTop="1" paddingBottom="1">
-			<mx:Label fontWeight="bold" fontSize="13" text="Particles:" />
-			<mx:NumericStepper fontWeight="bold" minimum="1" toolTip="{tooltips.particles}" toolTipCreate="createCustomTip('', event)" maximum="1000" id="parts"  />
-			<mx:Label fontWeight="bold" fontSize="13" text="Release Depth:" />
-			<classes:NumberInput width="60" text="0" fractionalDigits="5" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.depthT}" id="depthVal"/>
-			<s:Label text="Meters" color="white" fontWeight="bold" toolTip="{tooltips.depthT}" fontSize="12"/>
-			<mx:Label fontWeight="bold"  fontSize="13" text="Horizontal Dispersion:" />
-			<classes:NumberInput width="60" text="0.0" toolTip="{tooltips.hDisp}" toolTipCreate="createCustomTip('', event)" fractionalDigits="5" id="horiDisp"/>
-			<s:Label text="m/s" color="white" fontWeight="bold" fontSize="12"/>
-			<mx:Label fontWeight="bold" fontSize="13" text="Vertical Dispersion:" />
-			<classes:NumberInput width="60" toolTip="{tooltips.vDisp}" text="0.0" toolTipCreate="createCustomTip('', event)" fractionalDigits="5" id="vertDis"/>
-			<s:Label text="m/s" color="white" fontWeight="bold" fontSize="12"/>
-		</mx:HBox>
-	</mx:HBox>
-	<mx:HRule width="100%"/>
-	<mx:HBox verticalAlign="middle" width="85%">
-		<mx:VBox horizontalAlign="center">
-			<mx:Label paddingBottom="40" fontWeight="bold" paddingLeft="0" fontSize="14" text="Select a point on Map" toolTip="Run Model Steps" />
-			<mx:Label paddingLeft="0" fontSize="12" fontWeight="bold" text="Showing"  />
-			<mx:Label paddingLeft="0" fontSize="12" text="Forcing domain" />
-			<mx:Label paddingLeft="0" fontSize="12" text="on map" />
-		</mx:VBox>
-		<esri:Map id="map" wrapAround180="true" scaleBarVisible="false" logoVisible="false" level="2" zoomSliderVisible="true" height="310" />
-	</mx:HBox>
-	<mx:HRule width="100%"/>
-	<mx:HBox verticalAlign="middle" horizontalAlign="center" width="100%" height="35" paddingTop="3" paddingBottom="3">
-		<!/-<s:Button fontWeight="bold" fontSize="14" label="Back" id="goBack" toolTip="Go Back" click="{dt.activate(DrawTool.MAPPOINT)}" />->
-		<s:Label color="#FF3333" fontWeight="bold" id="error"/>
-		<s:Button fontWeight="bold" fontSize="14" label="Run Model" enabled="false" id="goButt" toolTip="Run Model" toolTipCreate="createCustomTip('', event)" click="runModel()"/>
-	</mx:HBox>
-	</mx:VBox>
-	-->
 </mx:Canvas>
