@@ -138,8 +138,8 @@
 				conf.geomT = ob.geometry;
 				conf.releaseT = ob.release_depth;
 				conf.methodT = ob.time_method;
-				conf.verticT = ob.horiz_dispersion;
-				conf.horizT = ob.vert_dispersion;
+				conf.verticT = ob.vert_dispersion;
+				conf.horizT = ob.horiz_dispersion;
 				conf.ownT = ob.email;
 				conf.sDateT = ob.start;
 				conf.behT = ob.behavior;

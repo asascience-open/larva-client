@@ -73,7 +73,7 @@
 					<s:Label text="  m/s" fontWeight="bold"/>
 				</s:HGroup>
 				<s:HGroup>
-					<s:Label text="Verticle Dispersion" width="150" fontWeight="bold" />
+					<s:Label text="Vertical Dispersion" width="150" fontWeight="bold" />
 					<s:Label id="vertic" text="{verticT}"/>
 					<s:Label text="  m/s" fontWeight="bold"/>
 				</s:HGroup>

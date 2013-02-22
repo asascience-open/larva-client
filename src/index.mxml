@@ -167,6 +167,7 @@
 					loaderStat.visible = false;
 					toggleTools.selectedIndex = 0;
 					statusStr.visible = false;
+					exitText.visible = true;
 				}
 				function loadError(event:FaultEvent): void{
 					Alert.show("Service Error");
@@ -329,7 +330,7 @@
 									height="35" color="#333333" paddingRight="100" />
 			</s:HGroup>
 			
-			<mx:LinkButton label="EXIT" click="exit()" styleName="exitApp" />
+			<mx:LinkButton label="EXIT" click="exit()" visible="false" id="exitText" styleName="exitApp" />
 			<!--<s:Label text="EXIT" styleName="exitApp" buttonMode="true" useHandCursor="true" click="exit()"/>-->
 			
 		</s:BorderContainer>
