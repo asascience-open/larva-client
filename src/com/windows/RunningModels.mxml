@@ -254,6 +254,7 @@
 				
 				<mx:DataGrid id="runs" dataProvider="{modelList}" width="100%" rowCount="10" styleName="dataGridText" verticalAlign="middle">
 					<mx:columns>
+						<mx:DataGridColumn headerText="Name" 	dataField="name" width="100"/>
 						<mx:DataGridColumn headerText="Created" dataField="created"  width="110" />
 						<mx:DataGridColumn headerText="User" 	dataField="email" />
 						<mx:DataGridColumn headerText="Progress/Status" dataField="status" itemRenderer="com.windows.statusRenderer" textAlign="center" fontWeight="bold" width="105" />

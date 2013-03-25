@@ -70,9 +70,9 @@
 			{
 				var backgroundMap:ArcGISTiledMapServiceLayer = new ArcGISTiledMapServiceLayer(backgroundMapU);
 				
-				var landWater:WMSLayer = new WMSLayer(landMapU,'10m_land','10m_land',"png");
+				var landWater:WMSLayer = new WMSLayer(landMapU,'shorelines:10m_land_polygons','shorelines:10m_land_polygons',"png");
 				
-				landWater.alpha = .3;
+				landWater.alpha = .5;
 				
 				map.removeAllLayers();
 				map.addLayer(backgroundMap);
@@ -111,7 +111,7 @@
 					runModelEnabled = false;
 				}
 				else{
-					var layerName:String = "10m_land";
+					var layerName:String = "shorelines:10m_land_polygons";
 					
 					var _params:URLVariables = new URLVariables();
 					_params.transparent = "true";
@@ -197,7 +197,7 @@
 				else
 				{
 					//GetFeature request
-					var layerName:String = "10m_land";
+					var layerName:String = "shorelines:10m_land_polygons";
 					
 					var _params:URLVariables = new URLVariables();
 					_params.transparent = "true";
@@ -277,6 +277,7 @@
 					var webmercpt:MapPoint = WebMercatorUtil.webMercatorToGeographic(gr.geometry) as MapPoint;
 					
 					var modelObject:Object = new Object;
+					modelObject["name"] = nameD.text; 
 					modelObject["hydro_path"] = datasetCurrents; 
 					modelObject["duration"] = dur.value;
 					modelObject["email"] = emailStr; 
@@ -285,7 +286,7 @@
 					modelObject["horiz_dispersion"] = Number(horiDisp.text); 
 					modelObject["behavior"] = urlStr+behavior +".json";
 					modelObject["particles"] = parts.value;
-					modelObject["release_depth"] = Number(depthVal.text);
+					modelObject["release_depth"] = Number(depthVal.text)*-1;
 					modelObject["start"] = starDate.selectedDate.time; 
 					modelObject["time_chunk"] = 10;
 					//add mins,hours, and days
@@ -388,6 +389,9 @@
 				<s:VGroup gap="40" paddingLeft="-5">
 					<mx:Form width="100%" >
 						<!-- mx:FormHeading label="Group 1"/ -->
+						<mx:FormItem label="Model Name:" styleName="form-labels">
+							<s:TextInput id="nameD"/>
+						</mx:FormItem>
 						<mx:FormItem label="Start Date:" styleName="form-labels">
 							<mx:DateField change="checkTime()" id="starDate" selectableRange="{{rangeStart:sDate,rangeEnd:eDate}}" selectedDate="{defaultDate}" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.modelDate}" width="100"/>
 						</mx:FormItem>
@@ -438,8 +442,8 @@
 						
 						<mx:FormItem label="Release Depth:" styleName="form-labels">
 						<s:HGroup verticalAlign="baseline">
-							<classes:NumberInput width="57" text="0" fractionalDigits="5" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.depthT}" id="depthVal"/>
-							<mx:Label text="meters" styleName="form-measures" />
+							<classes:NumberInput allowNegative="false" width="57" text="0" fractionalDigits="5" toolTipCreate="createCustomTip('', event)" toolTip="{tooltips.depthT}" id="depthVal"/>
+							<mx:Label text="meters below surface - positive down" styleName="form-measures" />
 						</s:HGroup>
 						</mx:FormItem>
 						
